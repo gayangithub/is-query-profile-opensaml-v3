@@ -336,14 +336,4 @@ public class SAMLQueryRequestUtil {
         }
     }
 
-    /**
-     * create soap envelop accrding tgo SOAP version
-     *
-     * @param nsUri
-     * @return public static SOAPEnvelope createSOAPEnvelope(String nsUri) {
-    return nsUri != null && "http://schemas.xmlsoap.org/soap/envelope/".equals(nsUri) ?
-    DOOMAbstractFactory.getSOAP11Factory().getDefaultEnvelope() :
-    DOOMAbstractFactory.getSOAP12Factory().getDefaultEnvelope();
-    }
-     */
 }

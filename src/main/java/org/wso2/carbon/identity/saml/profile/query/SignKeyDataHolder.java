@@ -17,6 +17,8 @@
  */
 package org.wso2.carbon.identity.saml.profile.query;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.xml.security.signature.XMLSignature;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.CredentialContextSet;
@@ -48,6 +50,7 @@ import java.util.Collection;
 
 public class SignKeyDataHolder implements X509Credential {
 
+    final static Log log = LogFactory.getLog(X509Credential.class);
     public static final String SECURITY_KEY_STORE_KEY_ALIAS = "Security.KeyStore.KeyAlias";
     private static final String DSA_ENCRYPTION_ALGORITHM = "DSA";
     private String signatureAlgorithm = null;
@@ -57,7 +60,7 @@ public class SignKeyDataHolder implements X509Credential {
 
     private PublicKey publicKey = null;
 
-    public SignKeyDataHolder(String username) throws IdentityException {
+    public SignKeyDataHolder(String username) throws IdentityException{
         String keyAlias = null;
         KeyStoreAdmin keyAdmin;
         KeyStoreManager keyMan;
@@ -67,7 +70,7 @@ public class SignKeyDataHolder implements X509Credential {
         String userTenantDomain;
         String spTenantDomain;
 
-        try {
+        try{
 
             userTenantDomain = MultitenantUtils.getTenantDomain(username);
             spTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
@@ -147,8 +150,13 @@ public class SignKeyDataHolder implements X509Credential {
                 }
             }
 
-        } catch (Exception e) {
-            throw IdentityException.error(e.getMessage(), e);
+        } catch (IdentityException e) {
+            log.error(e);
+
+        }
+        catch (Exception e) {
+            log.error(e);
+
         }
 
     }
@@ -172,7 +180,7 @@ public class SignKeyDataHolder implements X509Credential {
         return null;
     }
 
-    @Nonnull
+
     public Collection<String> getKeyNames() {
         return null;
     }
@@ -197,7 +205,7 @@ public class SignKeyDataHolder implements X509Credential {
         return null;
     }
 
-    @Nonnull
+
     public Class<? extends Credential> getCredentialType() {
         return null;
     }
@@ -208,7 +216,7 @@ public class SignKeyDataHolder implements X509Credential {
         return issuerCerts[0];
     }
 
-    @Nonnull
+
     public Collection<X509Certificate> getEntityCertificateChain() {
         return null;
     }

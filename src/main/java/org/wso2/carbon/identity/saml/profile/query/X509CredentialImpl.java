@@ -59,7 +59,7 @@ public class X509CredentialImpl implements X509Credential {
         return null;
     }
 
-    @Nonnull
+
     public Collection<String> getKeyNames() {
         return null;
     }
@@ -85,7 +85,7 @@ public class X509CredentialImpl implements X509Credential {
         return null;
     }
 
-    @Nonnull
+
     public Class<? extends Credential> getCredentialType() {
         return null;
     }

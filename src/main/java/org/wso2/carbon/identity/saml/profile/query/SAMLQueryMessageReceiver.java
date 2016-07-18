@@ -46,7 +46,6 @@ import javax.xml.stream.XMLStreamException;
 public class SAMLQueryMessageReceiver extends AbstractInOutMessageReceiver {
     OMElement queryOM = null;
     boolean isValidMessage = false;
-    boolean isResponseCreated = false;
     List<InvalidItemDTO> invalidItems = new ArrayList<InvalidItemDTO>();
 
 
@@ -80,7 +79,7 @@ public class SAMLQueryMessageReceiver extends AbstractInOutMessageReceiver {
                             if (myOMElement != null) {
                                 SOAPEnvelope soapEnvelope = TransportUtils.createSOAPEnvelope(myOMElement);
                                 outMessageContext.setEnvelope(soapEnvelope);
-                                isResponseCreated = true;
+
                                 log.info(SAMLQueryRequestConstants.ServiceMessages.SOAP_RESPONSE_CREATED);
                             }
                         } catch (XMLStreamException e) {

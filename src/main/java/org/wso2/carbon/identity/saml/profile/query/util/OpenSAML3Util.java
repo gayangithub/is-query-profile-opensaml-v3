@@ -243,7 +243,7 @@ public class OpenSAML3Util {
     public static X509CredentialImpl getX509CredentialImplForTenant(String tenantDomain, String alias)
             throws IdentitySAML2SSOException {
 
-        if (tenantDomain == null || tenantDomain.trim().equals(null) || alias == null || alias.trim().equals(null)) {
+        if (tenantDomain.trim() == null|| alias.trim() ==null) {
             throw new IllegalArgumentException("Invalid parameters; domain name : " + tenantDomain + ", " +
                     "alias : " + alias);
         }
