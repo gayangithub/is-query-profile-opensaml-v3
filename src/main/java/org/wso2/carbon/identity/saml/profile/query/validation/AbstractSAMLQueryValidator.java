@@ -104,7 +104,7 @@ public class AbstractSAMLQueryValidator implements SAMLQueryValidator {
             isValidSig = OpenSAML3Util.validateXMLSignature(request,
                     alias, domainName);
 
-           if (isValidSig) {
+            if (isValidSig) {
                 log.info("Signature successfully validated");
                 return true;
 

@@ -36,9 +36,10 @@ import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestConstant
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
 import org.wso2.carbon.identity.saml.profile.query.validation.SAMLQueryValidator;
 import org.wso2.carbon.identity.saml.profile.query.validation.SAMLValidatorFactory;
+
+import javax.xml.stream.XMLStreamException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.stream.XMLStreamException;
 
 /**
  * Axis2 Message receiver for SAML2 Query Request Profile

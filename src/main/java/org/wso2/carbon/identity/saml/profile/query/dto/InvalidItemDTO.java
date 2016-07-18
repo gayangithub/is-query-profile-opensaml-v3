@@ -28,6 +28,7 @@ public class InvalidItemDTO {
 
     /**
      * Constructor
+     *
      * @param validationtype
      * @param message
      */
@@ -38,7 +39,6 @@ public class InvalidItemDTO {
     }
 
     /**
-     *
      * @return String message
      */
     public String getMessage() {
@@ -47,7 +47,6 @@ public class InvalidItemDTO {
     }
 
     /**
-     *
      * @param message
      */
     public void setMessage(String message) {
@@ -56,7 +55,6 @@ public class InvalidItemDTO {
     }
 
     /**
-     *
      * @return String validationetype
      */
     public String getValidationtype() {
@@ -65,7 +63,6 @@ public class InvalidItemDTO {
     }
 
     /**
-     *
      * @param validationtype
      */
     public void setValidationtype(String validationtype) {

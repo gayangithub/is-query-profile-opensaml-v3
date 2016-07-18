@@ -61,6 +61,7 @@ public class SAMLAttributeQueryProcessor extends SAMLSubjectQueryProcessor {
 
     /**
      * Convert required claim list into a String array
+     *
      * @param claimattributes
      * @return String[]
      */

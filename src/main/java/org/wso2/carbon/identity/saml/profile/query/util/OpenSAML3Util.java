@@ -23,10 +23,8 @@ import org.opensaml.xmlsec.signature.Signature;
 import org.opensaml.xmlsec.signature.X509Certificate;
 import org.opensaml.xmlsec.signature.X509Data;
 import org.opensaml.xmlsec.signature.support.SignatureException;
-import org.opensaml.xmlsec.signature.support.SignatureValidationProvider;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.opensaml.xmlsec.signature.support.Signer;
-import org.opensaml.xmlsec.signature.support.provider.ApacheSantuarioSignatureValidationProviderImpl;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
@@ -41,7 +39,6 @@ import org.wso2.carbon.identity.saml.profile.query.internal.SAMLQueryServiceComp
 import org.wso2.carbon.identity.sso.saml.SAMLSSOConstants;
 import org.wso2.carbon.identity.sso.saml.builders.signature.SSOSigner;
 import org.wso2.carbon.identity.sso.saml.exception.IdentitySAML2SSOException;
-import org.wso2.carbon.identity.sso.saml.util.SAMLSSOUtil;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManager;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -110,7 +107,7 @@ public class OpenSAML3Util {
     }
 
     public static void setSignature(Assertion response, String signatureAlgorithm, String digestAlgorithm,
-                                         X509Credential cred) throws IdentityException {
+                                    X509Credential cred) throws IdentityException {
 
         doSetSignature(response, signatureAlgorithm, digestAlgorithm, cred);
     }
@@ -243,7 +240,7 @@ public class OpenSAML3Util {
     public static X509CredentialImpl getX509CredentialImplForTenant(String tenantDomain, String alias)
             throws IdentitySAML2SSOException {
 
-        if (tenantDomain.trim() == null|| alias.trim() ==null) {
+        if (tenantDomain.trim() == null || alias.trim() == null) {
             throw new IllegalArgumentException("Invalid parameters; domain name : " + tenantDomain + ", " +
                     "alias : " + alias);
         }
@@ -279,7 +276,6 @@ public class OpenSAML3Util {
         }
         return credentialImpl;
     }
-
 
 
 }

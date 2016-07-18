@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.saml.profile.query.QueryResponseBuilder;
 import org.wso2.carbon.identity.saml.profile.query.handler.SAMLAttributeFinder;
 import org.wso2.carbon.identity.saml.profile.query.handler.UserStoreAttributeFinder;
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

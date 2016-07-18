@@ -52,6 +52,7 @@ public class SignKeyDataHolder implements X509Credential {
 
     final static Log log = LogFactory.getLog(X509Credential.class);
     public static final String SECURITY_KEY_STORE_KEY_ALIAS = "Security.KeyStore.KeyAlias";
+    final static Log log = LogFactory.getLog(X509Credential.class);
     private static final String DSA_ENCRYPTION_ALGORITHM = "DSA";
     private String signatureAlgorithm = null;
     private X509Certificate[] issuerCerts = null;
@@ -60,7 +61,7 @@ public class SignKeyDataHolder implements X509Credential {
 
     private PublicKey publicKey = null;
 
-    public SignKeyDataHolder(String username) throws IdentityException{
+    public SignKeyDataHolder(String username) throws IdentityException {
         String keyAlias = null;
         KeyStoreAdmin keyAdmin;
         KeyStoreManager keyMan;
@@ -70,7 +71,7 @@ public class SignKeyDataHolder implements X509Credential {
         String userTenantDomain;
         String spTenantDomain;
 
-        try{
+        try {
 
             userTenantDomain = MultitenantUtils.getTenantDomain(username);
             spTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
@@ -153,8 +154,7 @@ public class SignKeyDataHolder implements X509Credential {
         } catch (IdentityException e) {
             log.error(e);
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error(e);
 
         }

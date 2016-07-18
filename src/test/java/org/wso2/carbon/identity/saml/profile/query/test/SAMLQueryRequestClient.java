@@ -10,12 +10,20 @@ import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.ConfigurationContextFactory;
 import org.joda.time.DateTime;
 import org.opensaml.saml.common.SAMLVersion;
-import org.opensaml.saml.saml2.core.*;
-import org.opensaml.saml.saml2.core.impl.*;
-import org.opensaml.xmlsec.signature.SignableXMLObject;
+import org.opensaml.saml.saml2.core.AttributeQuery;
+import org.opensaml.saml.saml2.core.Issuer;
+import org.opensaml.saml.saml2.core.NameID;
+import org.opensaml.saml.saml2.core.Subject;
+import org.opensaml.saml.saml2.core.SubjectConfirmation;
+import org.opensaml.saml.saml2.core.SubjectConfirmationData;
+import org.opensaml.saml.saml2.core.impl.AttributeQueryBuilder;
+import org.opensaml.saml.saml2.core.impl.IssuerBuilder;
+import org.opensaml.saml.saml2.core.impl.NameIDBuilder;
+import org.opensaml.saml.saml2.core.impl.SubjectBuilder;
+import org.opensaml.saml.saml2.core.impl.SubjectConfirmationBuilder;
+import org.opensaml.saml.saml2.core.impl.SubjectConfirmationDataBuilder;
 import org.wso2.carbon.identity.saml.profile.query.util.OpenSAML3Util;
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
-import org.wso2.carbon.identity.sso.saml.util.SAMLSSOUtil;
 
 import java.io.File;
 import java.util.UUID;
@@ -30,7 +38,7 @@ public class SAMLQueryRequestClient {
         String body = "";
         DateTime issueInstant = new DateTime();
         DateTime notOnOrAfter =
-                new DateTime(issueInstant.getMillis() + (long)  60 * 1000);
+                new DateTime(issueInstant.getMillis() + (long) 60 * 1000);
 
         AttributeQuery attributeQuery = new AttributeQueryBuilder().buildObject();
         Issuer issuer = new IssuerBuilder().buildObject();
@@ -56,7 +64,7 @@ public class SAMLQueryRequestClient {
 
         SAMLQueryRequestUtil.doBootstrap();
         OpenSAML3Util.setSSOSignature(attributeQuery, "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
-                                        "http://www.w3.org/2000/09/xmldsig#sha1", new SPSignKeyDataHolder());
+                "http://www.w3.org/2000/09/xmldsig#sha1", new SPSignKeyDataHolder());
 
         try {
             String requestMessage = SAMLQueryRequestUtil.marshall(attributeQuery);
