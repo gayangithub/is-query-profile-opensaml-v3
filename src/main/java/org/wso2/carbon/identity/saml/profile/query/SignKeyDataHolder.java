@@ -32,6 +32,7 @@ import org.wso2.carbon.identity.sso.saml.SAMLSSOConstants;
 import org.wso2.carbon.identity.sso.saml.util.SAMLSSOUtil;
 import org.wso2.carbon.security.keystore.KeyStoreAdmin;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
+import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -54,6 +55,8 @@ public class SignKeyDataHolder implements X509Credential {
 
     private PrivateKey issuerPK = null;
 
+    private PublicKey publicKey = null;
+
     public SignKeyDataHolder(String username) throws IdentityException {
         String keyAlias = null;
         KeyStoreAdmin keyAdmin;
@@ -66,7 +69,7 @@ public class SignKeyDataHolder implements X509Credential {
 
         try {
 
-            userTenantDomain = SAMLSSOUtil.getUserTenantDomain();
+            userTenantDomain = MultitenantUtils.getTenantDomain(username);
             spTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
 
             if (userTenantDomain == null) {
@@ -110,7 +113,8 @@ public class SignKeyDataHolder implements X509Credential {
 
                 signatureAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA;
 
-                String pubKeyAlgo = issuerCerts[0].getPublicKey().getAlgorithm();
+                publicKey = issuerCerts[0].getPublicKey();
+                String pubKeyAlgo = publicKey.getAlgorithm();
                 if (DSA_ENCRYPTION_ALGORITHM.equalsIgnoreCase(pubKeyAlgo)) {
                     signatureAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
                 }
@@ -136,7 +140,8 @@ public class SignKeyDataHolder implements X509Credential {
 
                 signatureAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA;
 
-                String pubKeyAlgo = issuerCerts[0].getPublicKey().getAlgorithm();
+                publicKey = issuerCerts[0].getPublicKey();
+                String pubKeyAlgo = publicKey.getAlgorithm();
                 if (DSA_ENCRYPTION_ALGORITHM.equalsIgnoreCase(pubKeyAlgo)) {
                     signatureAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
                 }
@@ -174,12 +179,12 @@ public class SignKeyDataHolder implements X509Credential {
 
     @Nullable
     public PublicKey getPublicKey() {
-        return null;
+        return publicKey;
     }
 
     @Nullable
     public PrivateKey getPrivateKey() {
-        return null;
+        return issuerPK;
     }
 
     @Nullable
@@ -200,7 +205,7 @@ public class SignKeyDataHolder implements X509Credential {
 
     @Nonnull
     public X509Certificate getEntityCertificate() {
-        return null;
+        return issuerCerts[0];
     }
 
     @Nonnull

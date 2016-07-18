@@ -17,6 +17,7 @@ import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -65,7 +66,7 @@ public class X509CredentialImpl implements X509Credential {
 
     @Nullable
     public PublicKey getPublicKey() {
-        return null;
+        return publicKey;
     }
 
 
@@ -95,12 +96,12 @@ public class X509CredentialImpl implements X509Credential {
 
     @Nonnull
     public X509Certificate getEntityCertificate() {
-        return null;
+        return signingCert;
     }
 
     @Nonnull
     public Collection<X509Certificate> getEntityCertificateChain() {
-        return null;
+        return new ArrayList<X509Certificate>();
     }
 
     @Nullable

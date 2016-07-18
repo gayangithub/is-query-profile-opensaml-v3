@@ -4,6 +4,7 @@ package org.wso2.carbon.identity.saml.profile.query.util;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.xml.security.Init;
 import org.apache.xml.security.c14n.Canonicalizer;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.Marshaller;
@@ -23,6 +24,7 @@ import org.opensaml.xmlsec.signature.X509Certificate;
 import org.opensaml.xmlsec.signature.X509Data;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignatureValidationProvider;
+import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.opensaml.xmlsec.signature.support.Signer;
 import org.opensaml.xmlsec.signature.support.provider.ApacheSantuarioSignatureValidationProviderImpl;
 import org.wso2.carbon.core.util.KeyStoreManager;
@@ -35,6 +37,7 @@ import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.saml.profile.query.X509CredentialImpl;
+import org.wso2.carbon.identity.saml.profile.query.internal.SAMLQueryServiceComponent;
 import org.wso2.carbon.identity.sso.saml.SAMLSSOConstants;
 import org.wso2.carbon.identity.sso.saml.builders.signature.SSOSigner;
 import org.wso2.carbon.identity.sso.saml.exception.IdentitySAML2SSOException;
@@ -72,7 +75,7 @@ public class OpenSAML3Util {
             tenantId = MultitenantConstants.SUPER_TENANT_ID;
         } else {
             try {
-                tenantId = SAMLSSOUtil.getRealmService().getTenantManager().getTenantId(tenantDomain);
+                tenantId = SAMLQueryServiceComponent.getRealmservice().getTenantManager().getTenantId(tenantDomain);
             } catch (UserStoreException e) {
                 throw IdentityException.error("Error occurred while retrieving tenant id from tenant domain", e);
             }
@@ -106,10 +109,10 @@ public class OpenSAML3Util {
         return issuer;
     }
 
-    public static Assertion setSignature(Assertion response, String signatureAlgorithm, String digestAlgorithm,
+    public static void setSignature(Assertion response, String signatureAlgorithm, String digestAlgorithm,
                                          X509Credential cred) throws IdentityException {
 
-        return (Assertion) doSetSignature(response, signatureAlgorithm, digestAlgorithm, cred);
+        doSetSignature(response, signatureAlgorithm, digestAlgorithm, cred);
     }
 
     public static Response setSignature(Response response, String signatureAlgorithm, String digestAlgorithm,
@@ -149,21 +152,19 @@ public class OpenSAML3Util {
         signature.setSignatureAlgorithm(signatureAlgorithm);
         signature.setCanonicalizationAlgorithm(Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 
-        KeyInfo keyInfo = (KeyInfo) buildXMLObject(KeyInfo.DEFAULT_ELEMENT_NAME);
-        X509Data data = (X509Data) buildXMLObject(X509Data.DEFAULT_ELEMENT_NAME);
-        X509Certificate cert = (X509Certificate) buildXMLObject(X509Certificate.DEFAULT_ELEMENT_NAME);
 
-        String value;
         try {
-            value = org.apache.xml.security.utils.Base64.encode(cred.getEntityCertificate().getEncoded());
+            KeyInfo keyInfo = (KeyInfo) buildXMLObject(KeyInfo.DEFAULT_ELEMENT_NAME);
+            X509Data data = (X509Data) buildXMLObject(X509Data.DEFAULT_ELEMENT_NAME);
+            X509Certificate cert = (X509Certificate) buildXMLObject(X509Certificate.DEFAULT_ELEMENT_NAME);
+            String value = org.apache.xml.security.utils.Base64.encode(cred.getEntityCertificate().getEncoded());
+            cert.setValue(value);
+            data.getX509Certificates().add(cert);
+            keyInfo.getX509Datas().add(data);
+            signature.setKeyInfo(keyInfo);
         } catch (CertificateEncodingException e) {
             throw IdentityException.error("Error occurred while retrieving encoded cert", e);
         }
-
-        cert.setValue(value);
-        data.getX509Certificates().add(cert);
-        keyInfo.getX509Datas().add(data);
-        signature.setKeyInfo(keyInfo);
 
         signableXMLObject.setSignature(signature);
         ((SAMLObjectContentReference) signature.getContentReferences().get(0)).setDigestAlgorithm(digestAlgorithm);
@@ -180,7 +181,8 @@ public class OpenSAML3Util {
             throw IdentityException.error("Unable to marshall the request", e);
         }
 
-        org.apache.xml.security.Init.init();
+        Init.init();
+
         try {
             Signer.signObjects(signatureList);
         } catch (SignatureException e) {
@@ -208,8 +210,8 @@ public class OpenSAML3Util {
             try {
                 X509Credential cred = (X509Credential) OpenSAML3Util.getX509CredentialImplForTenant(domainName, alias);
 
-
-                return OpenSAML3Util.validateXMLSignature(request, cred, alias);
+                SignatureValidator.validate(request.getSignature(), cred);
+                return true;
             } catch (IdentitySAML2SSOException e) {
                 if (log.isDebugEnabled()) {
                     log.debug("Signature validation failed for the SAML Message : Failed to construct the X509CredentialImpl for the alias " +
@@ -247,7 +249,7 @@ public class OpenSAML3Util {
         }
         int tenantId;
         try {
-            tenantId = realmService.getTenantManager().getTenantId(tenantDomain);
+            tenantId = SAMLQueryServiceComponent.getRealmservice().getTenantManager().getTenantId(tenantDomain);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
             String errorMsg = "Error getting the tenant ID for the tenant domain : " + tenantDomain;
             throw new IdentitySAML2SSOException(errorMsg, e);
@@ -278,24 +280,6 @@ public class OpenSAML3Util {
         return credentialImpl;
     }
 
-    public static boolean validateXMLSignature(RequestAbstractType request, X509Credential cred,
-                                               String alias) throws IdentityException {
-
-        boolean isSignatureValid = false;
-
-        if (request.getSignature() != null) {
-            try {
-                SignatureValidationProvider provider = new ApacheSantuarioSignatureValidationProviderImpl();
-                provider.validate(request.getSignature(), cred);
-                //SignatureValidator validator = new SignatureValidator();
-                //validator.validate(request.getSignature(), cred);
-                isSignatureValid = true;
-            } catch (SignatureException e) {
-                e.printStackTrace();
-            }
-        }
-        return isSignatureValid;
-    }
 
 
 }

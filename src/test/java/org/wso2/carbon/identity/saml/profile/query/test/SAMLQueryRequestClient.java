@@ -10,21 +10,14 @@ import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.ConfigurationContextFactory;
 import org.joda.time.DateTime;
 import org.opensaml.saml.common.SAMLVersion;
-import org.opensaml.saml.saml2.core.AttributeQuery;
-import org.opensaml.saml.saml2.core.Issuer;
-import org.opensaml.saml.saml2.core.NameID;
-import org.opensaml.saml.saml2.core.Subject;
-import org.opensaml.saml.saml2.core.SubjectConfirmation;
-import org.opensaml.saml.saml2.core.SubjectConfirmationData;
-import org.opensaml.saml.saml2.core.impl.AttributeQueryBuilder;
-import org.opensaml.saml.saml2.core.impl.IssuerBuilder;
-import org.opensaml.saml.saml2.core.impl.NameIDBuilder;
-import org.opensaml.saml.saml2.core.impl.SubjectBuilder;
-import org.opensaml.saml.saml2.core.impl.SubjectConfirmationBuilder;
-import org.opensaml.saml.saml2.core.impl.SubjectConfirmationDataBuilder;
+import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.impl.*;
+import org.opensaml.xmlsec.signature.SignableXMLObject;
+import org.wso2.carbon.identity.saml.profile.query.util.OpenSAML3Util;
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
 import org.wso2.carbon.identity.sso.saml.util.SAMLSSOUtil;
 
+import java.io.File;
 import java.util.UUID;
 
 
@@ -37,9 +30,7 @@ public class SAMLQueryRequestClient {
         String body = "";
         DateTime issueInstant = new DateTime();
         DateTime notOnOrAfter =
-                new DateTime(issueInstant.getMillis() +
-                        (long) SAMLSSOUtil.getSAMLResponseValidityPeriod() * 60 *
-                                1000);
+                new DateTime(issueInstant.getMillis() + (long)  60 * 1000);
 
         AttributeQuery attributeQuery = new AttributeQueryBuilder().buildObject();
         Issuer issuer = new IssuerBuilder().buildObject();
@@ -48,38 +39,37 @@ public class SAMLQueryRequestClient {
         SubjectConfirmation subjectConfirmation = new SubjectConfirmationBuilder().buildObject();
         SubjectConfirmationData subjectConfirmationData =
                 new SubjectConfirmationDataBuilder().buildObject();
-        /*
-        SignatureBuilder builder = new SignatureBuilder();
-        Signature signature = builder.buildObject();
-        Credential credential =new BasicX509Credential();
-        signature.setSigningCredential(credential);
-        signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1);
-        signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
-        */
         issuer.setValue(ISSUER_ID);
+        issuer.setFormat("urn:oasis:names:tc:SAML:2.0:nameid-format:entity");
         nameID.setValue(NAME_ID);
+        nameID.setFormat("urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress");
         subjectConfirmationData.setNotOnOrAfter(notOnOrAfter);
         subjectConfirmation.setSubjectConfirmationData(subjectConfirmationData);
+        subjectConfirmation.setMethod("urn:oasis:names:tc:SAML:2.0:cm:bearer");
         subject.getSubjectConfirmations().add(subjectConfirmation);
         subject.setNameID(nameID);
-
         attributeQuery.setVersion(SAMLVersion.VERSION_20);
         attributeQuery.setID(REQUEST_ID);
         attributeQuery.setIssueInstant(issueInstant);
         attributeQuery.setIssuer(issuer);
         attributeQuery.setSubject(subject);
-        //attributeQuery.setSignature(signature);
+
+        SAMLQueryRequestUtil.doBootstrap();
+        OpenSAML3Util.setSSOSignature(attributeQuery, "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
+                                        "http://www.w3.org/2000/09/xmldsig#sha1", new SPSignKeyDataHolder());
 
         try {
             String requestMessage = SAMLQueryRequestUtil.marshall(attributeQuery);
             body = requestMessage;
+            System.out.println("----Sample AttributeQuery Request Message----");
             System.out.println(body);
         } catch (Exception e) {
 
         }
 
 
-        String trustStore = "C:\\Downloads\\wso2\\wso2is-5.1.0\\repository\\resources\\security\\client-truststore.jks";
+        String trustStore = (new File("")).getAbsolutePath() + File.separator + "src" + File.separator +
+                "test" + File.separator + "resources" + File.separator + "client-truststore.jks";
         String trustStorePass = "wso2carbon";
         String endpoint = "https://localhost:9443/services/SAMLQueryService";
         String soapAction = "http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Test";
@@ -103,8 +93,7 @@ public class SAMLQueryRequestClient {
             configurationContext = ConfigurationContextFactory.
                     createConfigurationContextFromFileSystem(null, null);
             serviceClient = new ServiceClient(configurationContext, null);
-//            serviceClient.engageModule("rampart");
-//            serviceClient.engageModule("addressing");
+
         } catch (AxisFault axisFault) {
             System.err.println("Error creating axis2 service client !!!");
             axisFault.printStackTrace();
@@ -135,12 +124,13 @@ public class SAMLQueryRequestClient {
             System.err.println("Error invoking service !!!");
             axisFault.printStackTrace();
             System.exit(0);
-        } catch (javax.xml.stream.XMLStreamException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         // printing return message.
         if (result != null) {
+            System.out.println("------Response Message From WSO2 Identity Server-----");
             System.out.println(result.toString());
         } else {
 

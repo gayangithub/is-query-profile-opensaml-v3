@@ -139,7 +139,7 @@ public class SAMLQueryRequestUtil {
                 isBootstrapped = true;
             }
         } catch (InitializationException e) {
-            log.error("Unable to boostrap");
+            log.error("inable to boostrap");
         }
     }
 
