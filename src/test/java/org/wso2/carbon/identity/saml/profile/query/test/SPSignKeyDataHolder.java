@@ -24,25 +24,10 @@ import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.CredentialContextSet;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.x509.X509Credential;
-import org.wso2.carbon.base.ServerConfiguration;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.base.IdentityException;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.sso.saml.SAMLSSOConstants;
-import org.wso2.carbon.identity.sso.saml.util.SAMLSSOUtil;
-import org.wso2.carbon.security.keystore.KeyStoreAdmin;
-import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
-import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.crypto.SecretKey;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.security.Key;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -50,6 +35,9 @@ import java.security.cert.Certificate;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.crypto.SecretKey;
 
 
 public class SPSignKeyDataHolder implements X509Credential {
@@ -67,8 +55,9 @@ public class SPSignKeyDataHolder implements X509Credential {
 
         String keyStorePath = (new File("")).getAbsolutePath() + File.separator + "src" + File.separator +
                 "test" + File.separator + "resources" + File.separator + "soasecurity.jks";
-        String keyAlias ="soa";
-        String password = "password";;
+        String keyAlias = "soa";
+        String password = "password";
+        ;
         Certificate[] certificates;
 
         try {

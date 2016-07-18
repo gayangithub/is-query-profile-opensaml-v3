@@ -50,7 +50,6 @@ import java.util.Collection;
 
 public class SignKeyDataHolder implements X509Credential {
 
-    final static Log log = LogFactory.getLog(X509Credential.class);
     public static final String SECURITY_KEY_STORE_KEY_ALIAS = "Security.KeyStore.KeyAlias";
     final static Log log = LogFactory.getLog(X509Credential.class);
     private static final String DSA_ENCRYPTION_ALGORITHM = "DSA";
