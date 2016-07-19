@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.saml.profile.query.handler;
 
+import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
+
 import java.util.Map;
 
 /**
@@ -29,6 +31,6 @@ public interface SAMLAttributeFinder {
 
     public Map<String, String> getAttributes(String userName);
 
-    public Map<String, String> getAttributes(String userName, String[] attributes);
+    public Map<String, String> getAttributes(UserDTO user, String[] attributes);
 
 }

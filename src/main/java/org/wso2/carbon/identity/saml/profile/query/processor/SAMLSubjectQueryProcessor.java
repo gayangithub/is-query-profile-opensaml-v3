@@ -26,9 +26,11 @@ import org.opensaml.saml.saml2.core.RequestAbstractType;
 import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.saml.saml2.core.Subject;
 import org.opensaml.saml.saml2.core.SubjectQuery;
+import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.SAMLSSOServiceProviderDO;
 import org.wso2.carbon.identity.saml.profile.query.QueryResponseBuilder;
+import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
 import org.wso2.carbon.identity.saml.profile.query.handler.SAMLAttributeFinder;
 import org.wso2.carbon.identity.saml.profile.query.handler.UserStoreAttributeFinder;
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
@@ -54,16 +56,16 @@ public class SAMLSubjectQueryProcessor implements SAMLQueryProcessor {
 
         SubjectQuery query = (SubjectQuery) request;
         String issuer = getIssuer(query.getIssuer());
-        String userName = getUserName(query.getSubject());
+        UserDTO user = new UserDTO(getUserName(query.getSubject()));
         Object issuerConfig = getIssuerConfig(issuer);
-        Map<String, String> attributes = getUserAttributes(userName, null, issuerConfig);
-        Assertion assertion = build(userName, issuerConfig, attributes);
+        Map<String, String> attributes = getUserAttributes(user, null, issuerConfig);
+        Assertion assertion = build(user, issuerConfig, attributes);
         Assertion[] assertions = {assertion};
         Response response = null;
 
         try {
             //building response object
-            response = QueryResponseBuilder.build(assertions, (SAMLSSOServiceProviderDO) issuerConfig, userName);
+            response = QueryResponseBuilder.build(assertions, (SAMLSSOServiceProviderDO) issuerConfig,user);
             log.info("SAMLSubjectQueryProcessor : response generated");
         } catch (IdentityException e) {
             e.printStackTrace();
@@ -91,18 +93,18 @@ public class SAMLSubjectQueryProcessor implements SAMLQueryProcessor {
     /**
      * method to load user attributes as map with filtering(AttributeQuery)
      *
-     * @param userName
+     * @param user
      * @param attributes
      * @param issuerConfig
      * @return Map
      */
-    protected Map<String, String> getUserAttributes(String userName, String[] attributes,
+    protected Map<String, String> getUserAttributes(UserDTO user, String[] attributes,
                                                     Object issuerConfig) {
 
         List<SAMLAttributeFinder> finders = getAttributeFinders();
 
         for (SAMLAttributeFinder finder : finders) {
-            Map<String, String> attributeMap = finder.getAttributes(userName, attributes);
+            Map<String, String> attributeMap = finder.getAttributes(user, attributes);
             if (attributeMap != null && attributeMap.size() > 0) {
                 //filter attributes based on attribute query here
                 return attributeMap;
@@ -115,17 +117,17 @@ public class SAMLSubjectQueryProcessor implements SAMLQueryProcessor {
     /**
      * build assertion
      *
-     * @param userName
+     * @param user
      * @param issuer
      * @param attributes
      * @return
      */
-    protected Assertion build(String userName, Object issuer, Map<String, String> attributes) {
+    protected Assertion build(UserDTO user, Object issuer, Map<String, String> attributes) {
         Assertion responseAssertion = null;
         try {
-            responseAssertion = SAMLQueryRequestUtil.buildSAMLAssertion(userName, attributes, (SAMLSSOServiceProviderDO) issuer);
+            responseAssertion = SAMLQueryRequestUtil.buildSAMLAssertion(user, attributes, (SAMLSSOServiceProviderDO) issuer);
         } catch (IdentityException e) {
-            e.printStackTrace();
+           log.error(e);
         }
         return responseAssertion;
     }

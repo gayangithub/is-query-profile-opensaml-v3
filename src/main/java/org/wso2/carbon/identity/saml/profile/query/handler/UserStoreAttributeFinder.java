@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.saml.profile.query.handler;
 
 import org.wso2.carbon.context.CarbonContext;
+import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
 import org.wso2.carbon.identity.saml.profile.query.internal.SAMLQueryServiceComponent;
 import org.wso2.carbon.user.api.ClaimMapping;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -46,11 +47,11 @@ public class UserStoreAttributeFinder implements SAMLAttributeFinder {
 
 
     /**
-     * @param userName
+     * @param user
      * @param attributes
      * @return Map of attribute name value pairs
      */
-    public Map<String, String> getAttributes(String userName, String[] attributes) {
+    public Map<String, String> getAttributes(UserDTO user, String[] attributes) {
 
         //establish realmservice to access user store
         try {
@@ -70,7 +71,7 @@ public class UserStoreAttributeFinder implements SAMLAttributeFinder {
                 attributes = list.toArray(new String[list.size()]);
             }
 
-            return userStoreManager.getUserClaimValues(userName, attributes, null);
+            return userStoreManager.getUserClaimValues(user.getUserName(), attributes, null);
         } catch (UserStoreException e) {
             e.printStackTrace();
         }

@@ -73,6 +73,7 @@ import org.wso2.carbon.identity.core.model.SAMLSSOServiceProviderDO;
 import org.wso2.carbon.identity.core.persistence.IdentityPersistenceManager;
 import org.wso2.carbon.identity.saml.profile.query.SignKeyDataHolder;
 import org.wso2.carbon.identity.saml.profile.query.dto.InvalidItemDTO;
+import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
 import org.wso2.carbon.identity.sso.saml.SAMLSSOConstants;
 import org.wso2.carbon.identity.sso.saml.SSOServiceProviderConfigManager;
 import org.wso2.carbon.identity.sso.saml.util.CarbonEntityResolver;
@@ -177,11 +178,11 @@ public class SAMLQueryRequestUtil {
      * Build SAML assertion
      *
      * @param ssoIdPConfigs
-     * @param userName
+     * @param user
      * @return Assertion object
      * @throws IdentityException
      */
-    public static Assertion buildSAMLAssertion(String userName, Map<String, String> claims,
+    public static Assertion buildSAMLAssertion(UserDTO user, Map<String, String> claims,
                                                SAMLSSOServiceProviderDO ssoIdPConfigs)
             throws IdentityException {
 
@@ -202,7 +203,7 @@ public class SAMLQueryRequestUtil {
         String claimValue = null;
 
         if (claimValue == null) {
-            nameId.setValue(userName);
+            nameId.setValue(user.getUserName());
         }
 
         if (ssoIdPConfigs.getNameIDFormat() != null) {
@@ -260,7 +261,7 @@ public class SAMLQueryRequestUtil {
         if (ssoIdPConfigs.isDoSignAssertions()) {
             //Util method miss match
             OpenSAML3Util.setSignature(samlAssertion, ssoIdPConfigs.getSigningAlgorithmUri(), ssoIdPConfigs
-                    .getDigestAlgorithmUri(), new SignKeyDataHolder(userName));
+                    .getDigestAlgorithmUri(), new SignKeyDataHolder(user.getUserName()));
         }
 
         return samlAssertion;

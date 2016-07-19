@@ -27,6 +27,7 @@ import org.opensaml.saml.saml2.core.Response;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.SAMLSSOServiceProviderDO;
 import org.wso2.carbon.identity.saml.profile.query.QueryResponseBuilder;
+import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,18 +40,18 @@ public class SAMLAttributeQueryProcessor extends SAMLSubjectQueryProcessor {
     public Response process(RequestAbstractType request) {
         AttributeQuery query = (AttributeQuery) request;
         String issuer = getIssuer(query.getIssuer());
-        String userName = getUserName(query.getSubject());
+        UserDTO user = new UserDTO(getUserName(query.getSubject()));
         Object issuerConfig = getIssuerConfig(issuer);
         List<Attribute> requestedattributes = query.getAttributes();
         String claimAttributes[] = getAttributesAsArray(requestedattributes);
         //pass filtered attribute list below
-        Map<String, String> attributes = getUserAttributes(userName, claimAttributes, issuerConfig);
-        Assertion assertion = build(userName, issuerConfig, attributes);
+        Map<String, String> attributes = getUserAttributes(user, claimAttributes, issuerConfig);
+        Assertion assertion = build(user, issuerConfig, attributes);
         Assertion[] assertions = {assertion};
         Response response = null;
 
         try {
-            response = QueryResponseBuilder.build(assertions, (SAMLSSOServiceProviderDO) issuerConfig, userName);
+            response = QueryResponseBuilder.build(assertions, (SAMLSSOServiceProviderDO) issuerConfig, user);
             log.info("SAMLAttributeQueryProcessor : response generated");
         } catch (IdentityException e) {
             log.error("error occurred ", e);

@@ -86,7 +86,7 @@ public class AbstractSAMLQueryValidator implements SAMLQueryValidator {
                 //invalid signature
                 invalidItems.add(new InvalidItemDTO(SAMLQueryRequestConstants.ValidationType.VAL_SIGNATURE,
                         SAMLQueryRequestConstants.ValidationMessage.VAL_SIGNATURE_ERROR));
-                log.error(SAMLQueryRequestConstants.ValidationMessage.VAL_ISSUER_ERROR);
+                log.error(SAMLQueryRequestConstants.ValidationMessage.VAL_SIGNATURE_ERROR);
             }
         } catch (IdentityException ex) {
             log.error(SAMLQueryRequestConstants.ServiceMessages.SERVER_ERROR_PROCESSING_ISSUER_SIG_VERSION);

@@ -36,6 +36,7 @@ import org.opensaml.saml.saml2.core.impl.StatusMessageBuilder;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.SAMLSSOServiceProviderDO;
 import org.wso2.carbon.identity.saml.profile.query.dto.InvalidItemDTO;
+import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
 import org.wso2.carbon.identity.saml.profile.query.util.OpenSAML3Util;
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestConstants;
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
@@ -52,16 +53,16 @@ public class QueryResponseBuilder {
     /**
      * @param assertions
      * @param ssoIdPConfigs
-     * @param userName
+     * @param user
      * @return
      * @throws IdentityException
      */
-    public static Response build(Assertion[] assertions, SAMLSSOServiceProviderDO ssoIdPConfigs, String userName) throws IdentityException {
+    public static Response build(Assertion[] assertions, SAMLSSOServiceProviderDO ssoIdPConfigs, UserDTO user) throws IdentityException {
         if (log.isDebugEnabled()) {
             log.debug("Building SAML Response for the consumer '");
         }
         Response response = new ResponseBuilder().buildObject();
-        response.setIssuer(OpenSAML3Util.getIssuer("carbon.super"));
+        response.setIssuer(OpenSAML3Util.getIssuer(user.getTenantDomain()));
         response.setID(SAMLSSOUtil.createID());
         response.setStatus(buildStatus(SAMLSSOConstants.StatusCodes.SUCCESS_CODE, null));
         response.setVersion(SAMLVersion.VERSION_20);
@@ -76,7 +77,7 @@ public class QueryResponseBuilder {
 
         //Sign on response message
         OpenSAML3Util.setSignature(response, ssoIdPConfigs.getSigningAlgorithmUri(), ssoIdPConfigs
-                .getDigestAlgorithmUri(), new SignKeyDataHolder(userName));
+                .getDigestAlgorithmUri(), new SignKeyDataHolder(user.getUserName()));
 
         return response;
     }
