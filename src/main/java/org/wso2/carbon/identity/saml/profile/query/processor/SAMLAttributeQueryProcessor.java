@@ -18,40 +18,57 @@
 
 package org.wso2.carbon.identity.saml.profile.query.processor;
 
-
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.Attribute;
-import org.opensaml.saml.saml2.core.AttributeQuery;
-import org.opensaml.saml.saml2.core.RequestAbstractType;
-import org.opensaml.saml.saml2.core.Response;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.opensaml.saml.saml2.core.*;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.SAMLSSOServiceProviderDO;
 import org.wso2.carbon.identity.saml.profile.query.QueryResponseBuilder;
-import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
+import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
+import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * This class is used to process attribute query requests
+ *
+ * @see AttributeQuery
+ */
 public class SAMLAttributeQueryProcessor extends SAMLSubjectQueryProcessor {
 
+    final static Log log = LogFactory.getLog(SAMLAttributeQueryProcessor.class);
+
+    /**
+     * This method is used to process validated attribute query request.This method has capability to
+     * build assertions and contain inside response message
+     *
+     * @param request attribute query request message
+     * @return Response response message with requested assertion
+     */
     @Override
     public Response process(RequestAbstractType request) {
         AttributeQuery query = (AttributeQuery) request;
-        String issuer = getIssuer(query.getIssuer());
-        UserDTO user = new UserDTO(getUserName(query.getSubject()));
-        Object issuerConfig = getIssuerConfig(issuer);
+        String user = getUserName(query.getSubject());
+        String issuerFullName = getIssuer(request.getIssuer());
+        String issuer = MultitenantUtils.getTenantAwareUsername(issuerFullName);
+        String tenantdomain = MultitenantUtils.getTenantDomain(issuerFullName);
         List<Attribute> requestedattributes = query.getAttributes();
+        SAMLSSOServiceProviderDO issuerConfig = getIssuerConfig(issuer);
         String claimAttributes[] = getAttributesAsArray(requestedattributes);
-        //pass filtered attribute list below
+        List<Assertion> assertions = new ArrayList<Assertion>();
         Map<String, String> attributes = getUserAttributes(user, claimAttributes, issuerConfig);
-        Assertion assertion = build(user, issuerConfig, attributes);
-        Assertion[] assertions = {assertion};
-        Response response = null;
-
+        Assertion assertion = null;
         try {
-            response = QueryResponseBuilder.build(assertions, (SAMLSSOServiceProviderDO) issuerConfig, user);
+            assertion = SAMLQueryRequestUtil.buildSAMLAssertion(tenantdomain, attributes, issuerConfig);
+        } catch (IdentityException e) {
+            log.error(e);
+        }
+        assertions.add(assertion);
+        Response response = null;
+        try {
+            response = QueryResponseBuilder.build(assertions, issuerConfig, user);
             log.info("SAMLAttributeQueryProcessor : response generated");
         } catch (IdentityException e) {
             log.error("error occurred ", e);
@@ -61,16 +78,14 @@ public class SAMLAttributeQueryProcessor extends SAMLSubjectQueryProcessor {
     }
 
     /**
-     * Convert required claim list into a String array
+     * This method is used to convert required claim list into a String array
      *
-     * @param claimattributes
-     * @return String[]
+     * @param claimattributes List of requested claims
+     * @return String[] List of requested claims
      */
     private String[] getAttributesAsArray(List<Attribute> claimattributes) {
         List<String> list = new ArrayList<String>();
         String[] claimArray = null;
-
-
         if (claimattributes.size() > 0) {
 
             for (Attribute attribute : claimattributes) {

@@ -18,32 +18,60 @@
 
 package org.wso2.carbon.identity.saml.profile.query.processor;
 
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.RequestAbstractType;
-import org.opensaml.saml.saml2.core.Response;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.opensaml.saml.saml2.core.*;
+import org.wso2.carbon.identity.base.IdentityException;
+import org.wso2.carbon.identity.core.model.SAMLSSOServiceProviderDO;
+import org.wso2.carbon.identity.saml.profile.query.QueryResponseBuilder;
 import org.wso2.carbon.identity.saml.profile.query.handler.SAMLAssertionFinder;
+import org.wso2.carbon.identity.saml.profile.query.handler.SAMLAssertionFinderImpl;
+import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
+import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * This class is used to process AssertionIDRequest message
+ *
+ * @see AssertionIDRequest
+ */
 public class SAMLIDRequestProcessor implements SAMLQueryProcessor {
+
+    final static Log log = LogFactory.getLog(SAMLIDRequestProcessor.class);
+
     /**
-     * implemetation of process method for requesting existing assertion
+     * This process method is for requesting existing assertion from assertion store
      *
-     * @param request
-     * @return
+     * @param request AssertionIDRequest from requester
+     * @return Response Generated response message including assertions
      */
     public Response process(RequestAbstractType request) {
-
-        String id = getId(request);
+        AssertionIDRequest assertion = (AssertionIDRequest) request;
+        String issuerFullName = getIssuer(request.getIssuer());
+        String issuer = MultitenantUtils.getTenantAwareUsername(issuerFullName);
+        String tenantdomain = MultitenantUtils.getTenantDomain(issuerFullName);
+        SAMLSSOServiceProviderDO issuerConfig = getIssuerConfig(issuer);
+        List<AssertionIDRef> assertionIDRefs = assertion.getAssertionIDRefs();
         Response response = null;
-        List<SAMLAssertionFinder> finders = getFinders();
-
-        for (SAMLAssertionFinder finder : finders) {
-            Assertion[] assertions = finder.find(id);
-            if (assertions != null && assertions.length > 0) {
-                return response;
+        List<Assertion> assertionList = new ArrayList<Assertion>();
+        for (AssertionIDRef assertionidref : assertionIDRefs) {
+            List<SAMLAssertionFinder> finders = getFinders();
+            String id = assertionidref.getAssertionID();
+            for (SAMLAssertionFinder finder : finders) {
+                Assertion returnAssertion = finder.findByID(id);
+                if (returnAssertion != null) {
+                    assertionList.add(returnAssertion);
+                }
+            }
+        }
+        if (assertionList.size() > 0) {
+            try {
+                response = QueryResponseBuilder.build(assertionList, issuerConfig, tenantdomain);
+                log.info("SAMLAAssertionIDRequest : response generated");
+            } catch (IdentityException e) {
+                log.error("error occurred ", e);
             }
         }
 
@@ -51,25 +79,45 @@ public class SAMLIDRequestProcessor implements SAMLQueryProcessor {
     }
 
     /**
-     * method to select Assertion finders
+     * This method is used to select Assertion finders
      *
-     * @return List
+     * @return List List of different assertion finders
      */
     private List<SAMLAssertionFinder> getFinders() {
+        List<SAMLAssertionFinder> finders = new ArrayList<SAMLAssertionFinder>();
+        SAMLAssertionFinder finder = new SAMLAssertionFinderImpl();
+        finder.init();
+        finders.add(finder);
+        return finders;
+    }
 
-        return new ArrayList<SAMLAssertionFinder>();
+
+    /**
+     * This method is used to get issuer value
+     *
+     * @param issuer Issuer element of request message
+     * @return String full qualified issuer name Ex: xxxx@carbon.super
+     */
+    protected String getIssuer(Issuer issuer) {
+
+        return issuer.getValue();
     }
 
     /**
-     * method to get Request ID
+     * This method is used to collect service provider information
      *
-     * @param request
-     * @return
+     * @param issuer name of the issuer
+     * @return SAMLSSOServiceProviderDO instance of information data
      */
-    private String getId(RequestAbstractType request) {
+    protected SAMLSSOServiceProviderDO getIssuerConfig(String issuer) {
 
-        return request.getID();
+        try {
+            return SAMLQueryRequestUtil.getServiceProviderConfig(issuer);
+        } catch (IdentityException e) {
+            log.error(e);
+        }
+        return null;
     }
 
-
 }
+

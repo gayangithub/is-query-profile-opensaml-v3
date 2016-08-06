@@ -18,8 +18,9 @@
 
 package org.wso2.carbon.identity.saml.profile.query.handler;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
-import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
 import org.wso2.carbon.identity.saml.profile.query.internal.SAMLQueryServiceComponent;
 import org.wso2.carbon.user.api.ClaimMapping;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -30,35 +31,34 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Implementation class of SAMLAttributeFinder
+ * Implementation class to find user attributes from user store
+ *
+ * @see SAMLAttributeFinder
  */
 public class UserStoreAttributeFinder implements SAMLAttributeFinder {
+
+    final static Log log = LogFactory.getLog(UserStoreAttributeFinder.class);
+
+    /**
+     * This method is used to initialize
+     */
     public void init() {
 
     }
 
     /**
-     * @param userName
-     * @return
+     * This method is used to establish realmservice and retrieve user information from user store
+     *
+     * @param user       Name of the user
+     * @param attributes Array of requested user attributes
+     * @return Map Collection of attribute name and value pairs
      */
-    public Map<String, String> getAttributes(String userName) {
-        return null;
-    }
-
-
-    /**
-     * @param user
-     * @param attributes
-     * @return Map of attribute name value pairs
-     */
-    public Map<String, String> getAttributes(UserDTO user, String[] attributes) {
-
-        //establish realmservice to access user store
+    public Map<String, String> getAttributes(String user, String[] attributes) {
         try {
             UserStoreManager userStoreManager = SAMLQueryServiceComponent.getRealmservice().
                     getTenantUserRealm(CarbonContext.getThreadLocalCarbonContext().getTenantId()).
                     getUserStoreManager();
-            //if not define filtering of user attributes
+
             if (attributes == null || attributes.length == 0) {
 
                 List<String> list = new ArrayList<String>();
@@ -71,9 +71,9 @@ public class UserStoreAttributeFinder implements SAMLAttributeFinder {
                 attributes = list.toArray(new String[list.size()]);
             }
 
-            return userStoreManager.getUserClaimValues(user.getUserName(), attributes, null);
+            return userStoreManager.getUserClaimValues(user, attributes, null);
         } catch (UserStoreException e) {
-            e.printStackTrace();
+            log.error(e);
         }
 
         return null;

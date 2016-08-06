@@ -16,40 +16,46 @@
 
 package org.wso2.carbon.identity.saml.profile.query.util;
 
+/**
+ * Class to represent constant values
+ */
 public class SAMLQueryRequestConstants {
 
-    public static class Attribute {
-        public static final String ISSUER_FORMAT =
-                "urn:oasis:names:tc:SAML:2.0:nameid-format:entity";
-    }
-
+    /**
+     * Class for standard validation types which represent individual validations
+     */
     public static class ValidationType {
 
-        //validation
+
         public static final String VAL_MESSAGE_BODY = "Validation Message Body";
-        public static final String VAL_UNMARSHAL = "Unmarshalling the Request";
+        public static final String VAL_UNMARSHAL = "UnMarshalling the Request";
         public static final String VAL_MESSAGE_TYPE = "Validation Message Type";
         public static final String VAL_VERSION = "Validating the Version";
         public static final String VAL_ISSUER = "Checking for Issuer";
         public static final String VAL_SIGNATURE = "Validating Signature";
+        public static final String NO_ASSERTIONS = "No Assertions Found";
     }
 
+    /**
+     * Standard class to represent validation messages
+     */
     public static class ValidationMessage {
 
         public static final String EXIT_WITH_ERROR = "Validation service error exit.";
         public static final String ERROR_LOADING_SP_CONF = "Error while reading Service Provider configurations.";
-
-        //validation messages
         public static final String VAL_MESSAGE_BODY_ERROR = "Message Body is Empty";
-        public static final String VAL_UNMARSHAL_FAIL = " Unable to unmarshal the request";
-        public static final String VAL_MESSAGE_TYPE_ERROR = "Invalid Standart Request Message Type";
-        public static final String VAL_VERSION_ERROR = "Invalied SAML version, expected version is 2.0";
+        public static final String VAL_UNMARSHAL_FAIL = " Unable to UnMarshall the request";
+        public static final String VAL_MESSAGE_TYPE_ERROR = "Invalid Standard Request Message Type";
+        public static final String VAL_VERSION_ERROR = "Invalid SAML version, expected version is 2.0";
         public static final String VAL_ISSUER_ERROR = "Issuer is Not Validated";
         public static final String VAL_SIGNATURE_ERROR = "Signature Validation for Request Failed";
+        public static final String NO_ASSERTIONS_ERROR = "No Assertions Found on Server";
 
     }
 
-
+    /**
+     * Standard class to represent server status messages
+     */
     public static class ServiceMessages {
         public static final String SERVICE_STARTED = "Assertion Query/Request Profile Started";
         public static final String SIGNATURE_VALIDATION_FAILED = "Internal Error in Signature Validation";
@@ -65,8 +71,13 @@ public class SAMLQueryRequestConstants {
         public static final String MARSHAL_ERROR = "Unable to Marshal Response ";
     }
 
-    public static class GenericContants {
+    /**
+     * Standard class for generic constants
+     */
+    public static class GenericConstants {
         public static final String UTF8_ENC = "UTF-8";
+        public static final String ISSUER_FORMAT =
+                "urn:oasis:names:tc:SAML:2.0:nameid-format:entity";
 
     }
 }

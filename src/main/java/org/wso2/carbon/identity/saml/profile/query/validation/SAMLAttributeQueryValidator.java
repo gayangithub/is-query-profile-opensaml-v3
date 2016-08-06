@@ -23,9 +23,19 @@ import org.wso2.carbon.identity.saml.profile.query.dto.InvalidItemDTO;
 
 import java.util.List;
 
-
+/**
+ * This class is used to validate uniques elements of AttributeQuery
+ *
+ * @see org.opensaml.saml.saml2.core.AttributeQuery
+ */
 public class SAMLAttributeQueryValidator extends SAMLSubjectQueryValidator {
-
+    /**
+     * This method is used to validate AttributeQuery message elements
+     *
+     * @param invalidItems List of invalid items tracked by validation process
+     * @param request      AttributeQuery request message
+     * @return Boolean true, If request message validated completely
+     */
     @Override
     public boolean validate(List<InvalidItemDTO> invalidItems, RequestAbstractType request) {
         return super.validate(invalidItems, request);

@@ -34,33 +34,8 @@ import org.opensaml.core.xml.schema.impl.XSStringBuilder;
 import org.opensaml.saml.common.SAMLVersion;
 import org.opensaml.saml.config.SAMLConfigurationInitializer;
 import org.opensaml.saml.saml1.core.NameIdentifier;
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.Attribute;
-import org.opensaml.saml.saml2.core.AttributeStatement;
-import org.opensaml.saml.saml2.core.AttributeValue;
-import org.opensaml.saml.saml2.core.Audience;
-import org.opensaml.saml.saml2.core.AudienceRestriction;
-import org.opensaml.saml.saml2.core.AuthnContext;
-import org.opensaml.saml.saml2.core.AuthnContextClassRef;
-import org.opensaml.saml.saml2.core.AuthnStatement;
-import org.opensaml.saml.saml2.core.Conditions;
-import org.opensaml.saml.saml2.core.NameID;
-import org.opensaml.saml.saml2.core.Subject;
-import org.opensaml.saml.saml2.core.SubjectConfirmation;
-import org.opensaml.saml.saml2.core.SubjectConfirmationData;
-import org.opensaml.saml.saml2.core.impl.AssertionBuilder;
-import org.opensaml.saml.saml2.core.impl.AttributeBuilder;
-import org.opensaml.saml.saml2.core.impl.AttributeStatementBuilder;
-import org.opensaml.saml.saml2.core.impl.AudienceBuilder;
-import org.opensaml.saml.saml2.core.impl.AudienceRestrictionBuilder;
-import org.opensaml.saml.saml2.core.impl.AuthnContextBuilder;
-import org.opensaml.saml.saml2.core.impl.AuthnContextClassRefBuilder;
-import org.opensaml.saml.saml2.core.impl.AuthnStatementBuilder;
-import org.opensaml.saml.saml2.core.impl.ConditionsBuilder;
-import org.opensaml.saml.saml2.core.impl.NameIDBuilder;
-import org.opensaml.saml.saml2.core.impl.SubjectBuilder;
-import org.opensaml.saml.saml2.core.impl.SubjectConfirmationBuilder;
-import org.opensaml.saml.saml2.core.impl.SubjectConfirmationDataBuilder;
+import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.impl.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
@@ -72,8 +47,6 @@ import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.SAMLSSOServiceProviderDO;
 import org.wso2.carbon.identity.core.persistence.IdentityPersistenceManager;
 import org.wso2.carbon.identity.saml.profile.query.SignKeyDataHolder;
-import org.wso2.carbon.identity.saml.profile.query.dto.InvalidItemDTO;
-import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
 import org.wso2.carbon.identity.sso.saml.SAMLSSOConstants;
 import org.wso2.carbon.identity.sso.saml.SSOServiceProviderConfigManager;
 import org.wso2.carbon.identity.sso.saml.util.CarbonEntityResolver;
@@ -88,7 +61,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 
@@ -100,11 +72,11 @@ public class SAMLQueryRequestUtil {
     /**
      * convert xml string into DOM object
      *
-     * @param xmlString
-     * @return XMLObject
+     * @param xmlString XML content in string format
+     * @return XMLObject well-formed XML object
      */
-    public static XMLObject unmarshall(List<InvalidItemDTO> invalidItems, String xmlString) {
-        InputStream inputStream = null;
+    public static XMLObject unmarshall(String xmlString) {
+        InputStream inputStream;
         try {
             doBootstrap();
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -113,15 +85,14 @@ public class SAMLQueryRequestUtil {
             documentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
             docBuilder.setEntityResolver(new CarbonEntityResolver());
-            inputStream = new ByteArrayInputStream(xmlString.trim().getBytes(SAMLQueryRequestConstants.GenericContants.UTF8_ENC));
+            inputStream = new ByteArrayInputStream(xmlString.trim().getBytes(SAMLQueryRequestConstants.GenericConstants.UTF8_ENC));
             Document document = docBuilder.parse(inputStream);
             Element element = document.getDocumentElement();
             UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
             Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
             return unmarshaller.unmarshall(element);
         } catch (Exception e) {
-            invalidItems.add(new InvalidItemDTO(SAMLQueryRequestConstants.ValidationType.VAL_UNMARSHAL,
-                    SAMLQueryRequestConstants.ValidationMessage.VAL_UNMARSHAL_FAIL));
+
             log.error(SAMLQueryRequestConstants.ValidationMessage.VAL_UNMARSHAL_FAIL, e);
         }
 
@@ -130,6 +101,8 @@ public class SAMLQueryRequestUtil {
 
     /**
      * Initializes the OpenSAML library modules, if not initialized yet.
+     *
+     * @throws IdentityException If unable to initialize
      */
     public static void doBootstrap() throws IdentityException {
         try {
@@ -145,11 +118,11 @@ public class SAMLQueryRequestUtil {
     }
 
     /**
-     * Load Service Provider Configurations
+     * This method is used to load Service Provider Configurations
      *
-     * @param issuer
-     * @return SAMLSSOServiceProviderDO
-     * @throws IdentityException
+     * @param issuer issuer name
+     * @return SAMLSSOServiceProviderDO issuer config instance
+     * @throws IdentityException If unable to get issuer information
      */
     public static SAMLSSOServiceProviderDO getServiceProviderConfig(String issuer)
             throws IdentityException {
@@ -175,14 +148,15 @@ public class SAMLQueryRequestUtil {
     }
 
     /**
-     * Build SAML assertion
+     * this method is used to build SAML2.0 assertion
      *
-     * @param ssoIdPConfigs
-     * @param user
-     * @return Assertion object
-     * @throws IdentityException
+     * @param ssoIdPConfigs issuer information
+     * @param tenantDomain  tenant domain of issuer
+     * @param claims        List of requested claims
+     * @return Assertion set of elements contain inside assertion
+     * @throws IdentityException If unable to collect issuer information
      */
-    public static Assertion buildSAMLAssertion(UserDTO user, Map<String, String> claims,
+    public static Assertion buildSAMLAssertion(String tenantDomain, Map<String, String> claims,
                                                SAMLSSOServiceProviderDO ssoIdPConfigs)
             throws IdentityException {
 
@@ -200,11 +174,7 @@ public class SAMLQueryRequestUtil {
         samlAssertion.setIssueInstant(currentTime);
         Subject subject = new SubjectBuilder().buildObject();
         NameID nameId = new NameIDBuilder().buildObject();
-        String claimValue = null;
 
-        if (claimValue == null) {
-            nameId.setValue(user.getUserName());
-        }
 
         if (ssoIdPConfigs.getNameIDFormat() != null) {
             nameId.setFormat(ssoIdPConfigs.getNameIDFormat());
@@ -259,19 +229,19 @@ public class SAMLQueryRequestUtil {
         samlAssertion.setConditions(conditions);
 
         if (ssoIdPConfigs.isDoSignAssertions()) {
-            //Util method miss match
+
             OpenSAML3Util.setSignature(samlAssertion, ssoIdPConfigs.getSigningAlgorithmUri(), ssoIdPConfigs
-                    .getDigestAlgorithmUri(), new SignKeyDataHolder(user.getUserName()));
+                    .getDigestAlgorithmUri(), new SignKeyDataHolder(tenantDomain));
         }
 
         return samlAssertion;
     }
 
     /**
-     * Build Attribute Statement
+     * This method is used to build Attribute Statement including user attributes
      *
-     * @param claims
-     * @return AttributeStatement
+     * @param claims List of requested claims
+     * @return AttributeStatement set of attributes contain inside attribute statement
      */
 
     public static AttributeStatement buildAttributeStatement(Map<String, String> claims) {
@@ -300,10 +270,11 @@ public class SAMLQueryRequestUtil {
     }
 
     /**
-     * Serialize the Auth. Request
+     * This method is used to serialize response message
      *
-     * @param xmlObject
-     * @return serialized auth. req
+     * @param xmlObject well formed XML object
+     * @return String serialized response
+     * @throws IdentityException If unable to marshall response
      */
     public static String marshall(XMLObject xmlObject) throws IdentityException {
 
@@ -322,9 +293,9 @@ public class SAMLQueryRequestUtil {
             LSOutput output = impl.createLSOutput();
             output.setByteStream(byteArrayOutputStrm);
             writer.write(element, output);
-            return byteArrayOutputStrm.toString("UTF-8");
+            return byteArrayOutputStrm.toString(SAMLQueryRequestConstants.GenericConstants.UTF8_ENC);
         } catch (Exception e) {
-            log.error("Error Serializing the SAML Response");
+            log.error("Error de-serializing the SAML Response", e);
             throw IdentityException.error("Error Serializing the SAML Response", e);
         } finally {
             if (byteArrayOutputStrm != null) {

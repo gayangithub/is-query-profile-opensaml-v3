@@ -27,12 +27,23 @@ import org.wso2.carbon.identity.saml.profile.query.dto.InvalidItemDTO;
 
 import java.util.List;
 
-
+/**
+ * This class is used to validate <code>SubjectQuery</code> as the parent message
+ * of AttributeQuery,AuthnQuery,AuthzDecisionQuery
+ *
+ * @see org.opensaml.saml.saml2.core.SubjectQuery
+ */
 public class SAMLSubjectQueryValidator extends AbstractSAMLQueryValidator {
 
     private final static Log log = LogFactory.getLog(SAMLSubjectQueryValidator.class);
 
-
+    /**
+     * This method is used to validate SubjectQuery super class
+     *
+     * @param invalidItems List of invalid items tracked by validation process
+     * @param request      Any type of assertion request
+     * @return Boolean true, if request message contain no validation errors
+     */
     @Override
     public boolean validate(List<InvalidItemDTO> invalidItems, RequestAbstractType request) {
         boolean isSuperValidated = super.validate(invalidItems, request);
@@ -40,23 +51,27 @@ public class SAMLSubjectQueryValidator extends AbstractSAMLQueryValidator {
 
             return false;
         }
-        boolean isSubjectValid = this.validateSubject((SubjectQueryImpl) request);
-
+        boolean isSubjectValid;
+        isSubjectValid = this.validateSubject((SubjectQueryImpl) request);
         return isSubjectValid;
     }
 
+    /**
+     * This method is used to validate subject of the request message
+     *
+     * @param subjectQuery SubjectQuery request message
+     * @return Boolean true, if request subject is valid
+     */
     protected boolean validateSubject(SubjectQueryImpl subjectQuery) {
         Subject subject = subjectQuery.getSubject();
         boolean isValidsubject = false;
-        // Validating SubjectID format
+
         if (subject != null && subject.getNameID() != null &&
                 subject.getNameID().getFormat() != null && super.getSsoIdpConfig().getNameIDFormat() != null &&
                 subject.getNameID().getFormat().equals(super.getSsoIdpConfig().getNameIDFormat())) {
             log.info("Request subject is valid");
             isValidsubject = true;
         }
-
-
         return isValidsubject;
     }
 }

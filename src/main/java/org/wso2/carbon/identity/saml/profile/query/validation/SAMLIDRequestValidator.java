@@ -18,16 +18,38 @@
 
 package org.wso2.carbon.identity.saml.profile.query.validation;
 
+import org.opensaml.saml.saml2.core.AssertionIDRef;
+import org.opensaml.saml.saml2.core.AssertionIDRequest;
 import org.opensaml.saml.saml2.core.RequestAbstractType;
 import org.wso2.carbon.identity.saml.profile.query.dto.InvalidItemDTO;
 
 import java.util.List;
 
-
+/**
+ * This class is used to validate AssertionID request by inspecting common and unique elements
+ *
+ * @see AssertionIDRequest
+ */
 public class SAMLIDRequestValidator extends AbstractSAMLQueryValidator {
 
+    /**
+     * This method is used to validate AssertionID request message
+     *
+     * @param invalidItems List of invalid items tracked by validation process
+     * @param request      Any type of assertion request
+     * @return Boolean true, if request message is completely validated
+     */
     @Override
     public boolean validate(List<InvalidItemDTO> invalidItems, RequestAbstractType request) {
-        return super.validate(invalidItems, request);
+        boolean isSuperValid;
+        isSuperValid = super.validate(invalidItems, request);
+
+        if (isSuperValid) {
+            List<AssertionIDRef> assertionIDRefs = ((AssertionIDRequest) request).getAssertionIDRefs();
+            return assertionIDRefs.size() > 0;
+
+        } else {
+            return false;
+        }
     }
 }

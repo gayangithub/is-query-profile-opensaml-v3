@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2010, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package org.wso2.carbon.identity.saml.profile.query;
 
 import org.opensaml.security.credential.Credential;
@@ -30,12 +48,12 @@ public class X509CredentialImpl implements X509Credential {
     private X509Certificate signingCert = null;
 
     /**
-     * The key is constructed form modulus and exponent.
+     * Constructor.The key is constructed form modulus and exponent.
      *
-     * @param modulus
-     * @param publicExponent
-     * @throws NoSuchAlgorithmException
-     * @throws InvalidKeySpecException
+     * @param modulus        modules number
+     * @param publicExponent public exponent number
+     * @throws NoSuchAlgorithmException If algorithm mismatch
+     * @throws InvalidKeySpecException  If invalid key specification
      */
     public X509CredentialImpl(BigInteger modulus, BigInteger publicExponent)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -44,6 +62,11 @@ public class X509CredentialImpl implements X509Credential {
         publicKey = keyFactory.generatePublic(spec);
     }
 
+    /**
+     * Constructor
+     *
+     * @param cert certificate of the source
+     */
     public X509CredentialImpl(X509Certificate cert) {
         publicKey = cert.getPublicKey();
         signingCert = cert;
@@ -64,6 +87,11 @@ public class X509CredentialImpl implements X509Credential {
         return null;
     }
 
+    /**
+     * getter of public key
+     *
+     * @return PublicKey public key
+     */
     @Nullable
     public PublicKey getPublicKey() {
         return publicKey;
@@ -90,6 +118,11 @@ public class X509CredentialImpl implements X509Credential {
         return null;
     }
 
+    /**
+     * getter of Signature Certificate
+     *
+     * @return X509Certificate signature certificate
+     */
     public X509Certificate getSigningCert() {
         return signingCert;
     }
@@ -99,8 +132,14 @@ public class X509CredentialImpl implements X509Credential {
         return signingCert;
     }
 
+    /**
+     * getter of entity certificate chain
+     *
+     * @return List collection of certificates
+     */
     @Nonnull
     public Collection<X509Certificate> getEntityCertificateChain() {
+
         return new ArrayList<X509Certificate>();
     }
 

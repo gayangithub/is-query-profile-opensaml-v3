@@ -37,9 +37,9 @@ public class SAMLQueryServiceComponent {
     private static RealmService realmservice = null;
 
     /**
-     * Get created realm service
+     * This method is used to get created realm service
      *
-     * @return RealmService
+     * @return RealmService RealmService instance to connect with user store
      */
     public static RealmService getRealmservice() {
 
@@ -47,9 +47,9 @@ public class SAMLQueryServiceComponent {
     }
 
     /**
-     * bundle activate method
+     * This method is used to activate bundle
      *
-     * @param ctxt
+     * @param ctxt component context instance
      */
     protected void activate(ComponentContext ctxt) {
 
@@ -59,16 +59,16 @@ public class SAMLQueryServiceComponent {
     }
 
     /**
-     * bundle deactivae method
+     * This method is used to deactivate bundle
      *
-     * @param ctxt
+     * @param ctxt component context instance
      */
     protected void deactivate(ComponentContext ctxt) {
 
     }
 
     /**
-     * sets realm service
+     * This method is used to set realm service
      *
      * @param realmService <code>RealmService</code>
      */
@@ -80,7 +80,7 @@ public class SAMLQueryServiceComponent {
     }
 
     /**
-     * un-sets realm service
+     * This method is used to un-set realm service
      *
      * @param realmService <code>RealmService</code>
      */

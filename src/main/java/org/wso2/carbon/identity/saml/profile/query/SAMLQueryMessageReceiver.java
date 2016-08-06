@@ -57,8 +57,13 @@ public class SAMLQueryMessageReceiver extends AbstractInOutMessageReceiver {
         if (inMessageContext.getEnvelope().getBody() != null) {
             //process if message body not null
             queryOM = inMessageContext.getEnvelope().getBody().getFirstElement();
-
-            RequestAbstractType request = ((RequestAbstractType) SAMLQueryRequestUtil.unmarshall(invalidItems, queryOM.toString()));
+            RequestAbstractType request = null;
+            try {
+                request = ((RequestAbstractType) SAMLQueryRequestUtil.unmarshall(queryOM.toString()));
+            } catch (Exception ex) {
+                invalidItems.add(new InvalidItemDTO(SAMLQueryRequestConstants.ValidationType.VAL_UNMARSHAL,
+                        SAMLQueryRequestConstants.ValidationMessage.VAL_UNMARSHAL_FAIL));
+            }
             if (request != null) {
                 //process only if message transformed successfully.
                 SAMLQueryValidator validator = SAMLValidatorFactory.getValidator(request);
@@ -66,33 +71,45 @@ public class SAMLQueryMessageReceiver extends AbstractInOutMessageReceiver {
                 isValidMessage = validator.validate(invalidItems, request);
                 if (isValidMessage) {
                     log.info(SAMLQueryRequestConstants.ServiceMessages.COMPLETE_VALIDATION);
-
                     //Process Request message
                     SAMLQueryProcessor processor = SAMLProcessorFactory.getProcessor(request);
-                    Response response = processor.process(request);
-
+                    Response response = null;
                     try {
-                        String stringResponse = SAMLQueryRequestUtil.marshall((response));
-                        OMElement myOMElement = null;
+                        Response tempResponse = processor.process(request);
+                        if (tempResponse != null) {
+                            response = tempResponse;
+                            try {
 
-                        try {
-                            myOMElement = AXIOMUtil.stringToOM(stringResponse);
-                            if (myOMElement != null) {
-                                SOAPEnvelope soapEnvelope = TransportUtils.createSOAPEnvelope(myOMElement);
-                                outMessageContext.setEnvelope(soapEnvelope);
+                                String stringResponse = SAMLQueryRequestUtil.marshall((response));
+                                OMElement myOMElement = null;
 
-                                log.info(SAMLQueryRequestConstants.ServiceMessages.SOAP_RESPONSE_CREATED);
+                                try {
+                                    myOMElement = AXIOMUtil.stringToOM(stringResponse);
+                                    if (myOMElement != null) {
+                                        SOAPEnvelope soapEnvelope = TransportUtils.createSOAPEnvelope(myOMElement);
+                                        outMessageContext.setEnvelope(soapEnvelope);
+
+                                        log.info(SAMLQueryRequestConstants.ServiceMessages.SOAP_RESPONSE_CREATED);
+                                    }
+                                } catch (XMLStreamException e) {
+                                    log.error(SAMLQueryRequestConstants.ServiceMessages.SOAP_RESPONSE_CREATION_FAILED);
+                                }
+
+
+                            } catch (IdentityException e) {
+                                log.error(SAMLQueryRequestConstants.ServiceMessages.MARSHAL_ERROR);
                             }
-                        } catch (XMLStreamException e) {
-                            log.error(SAMLQueryRequestConstants.ServiceMessages.SOAP_RESPONSE_CREATION_FAILED);
+                        } else {
+                            invalidItems.add(new InvalidItemDTO(SAMLQueryRequestConstants.ValidationType.NO_ASSERTIONS,
+                                    SAMLQueryRequestConstants.ValidationMessage.NO_ASSERTIONS_ERROR));
                         }
 
 
-                    } catch (IdentityException e) {
-                        log.error(SAMLQueryRequestConstants.ServiceMessages.MARSHAL_ERROR);
+                    } catch (Exception ex) {
+                        log.error(ex);
+                        invalidItems.add(new InvalidItemDTO(SAMLQueryRequestConstants.ValidationType.NO_ASSERTIONS,
+                                SAMLQueryRequestConstants.ValidationMessage.NO_ASSERTIONS_ERROR));
                     }
-
-
                 } else {
 
                     log.info("Request message contain validation issues!");
@@ -137,7 +154,7 @@ public class SAMLQueryMessageReceiver extends AbstractInOutMessageReceiver {
 
 
             } catch (IdentityException e) {
-                e.printStackTrace();
+                log.error(e);
             }
 
 

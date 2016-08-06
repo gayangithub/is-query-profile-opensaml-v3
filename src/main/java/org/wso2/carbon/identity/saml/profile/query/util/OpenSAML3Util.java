@@ -1,5 +1,22 @@
-package org.wso2.carbon.identity.saml.profile.query.util;
+/*
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
+package org.wso2.carbon.identity.saml.profile.query.util;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -17,11 +34,7 @@ import org.opensaml.saml.saml2.core.RequestAbstractType;
 import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.saml.saml2.core.impl.IssuerBuilder;
 import org.opensaml.security.x509.X509Credential;
-import org.opensaml.xmlsec.signature.KeyInfo;
-import org.opensaml.xmlsec.signature.SignableXMLObject;
-import org.opensaml.xmlsec.signature.Signature;
-import org.opensaml.xmlsec.signature.X509Certificate;
-import org.opensaml.xmlsec.signature.X509Data;
+import org.opensaml.xmlsec.signature.*;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.opensaml.xmlsec.signature.support.Signer;
@@ -37,12 +50,10 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.saml.profile.query.X509CredentialImpl;
 import org.wso2.carbon.identity.saml.profile.query.internal.SAMLQueryServiceComponent;
 import org.wso2.carbon.identity.sso.saml.SAMLSSOConstants;
-import org.wso2.carbon.identity.sso.saml.builders.signature.SSOSigner;
 import org.wso2.carbon.identity.sso.saml.exception.IdentitySAML2SSOException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManager;
 import org.wso2.carbon.user.api.UserStoreException;
-import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.security.KeyStore;
@@ -53,13 +64,20 @@ import java.util.List;
 import static org.opensaml.core.xml.util.XMLObjectSupport.buildXMLObject;
 import static org.wso2.carbon.identity.sso.saml.util.SAMLSSOUtil.generateKSNameFromDomainName;
 
+/**
+ * This is a utility class for processing request message issuer and signature elements.
+ */
 public class OpenSAML3Util {
 
-    private static SSOSigner ssoSigner = null;
-    private static RealmService realmService;
     private static Log log = LogFactory.getLog(OpenSAML3Util.class);
 
-
+    /**
+     * this method is used to get issuer according to tenant domain.
+     *
+     * @param tenantDomain tenant domain of the issuer
+     * @return Issuer  instance of Issuer
+     * @throws IdentityException If unable to connect with RealmService
+     */
     public static Issuer getIssuer(String tenantDomain) throws IdentityException {
 
         Issuer issuer = new IssuerBuilder().buildObject();
@@ -106,10 +124,19 @@ public class OpenSAML3Util {
         return issuer;
     }
 
-    public static void setSignature(Assertion response, String signatureAlgorithm, String digestAlgorithm,
+    /**
+     * This method is used to set signature to a assertion
+     *
+     * @param assertion          created assertion need to sign
+     * @param signatureAlgorithm signature algorithm
+     * @param digestAlgorithm    cryptographic hash algorithm
+     * @param cred               X509Credential instance
+     * @throws IdentityException If unable to write signature to the assertion
+     */
+    public static void setSignature(Assertion assertion, String signatureAlgorithm, String digestAlgorithm,
                                     X509Credential cred) throws IdentityException {
 
-        doSetSignature(response, signatureAlgorithm, digestAlgorithm, cred);
+        doSetSignature(assertion, signatureAlgorithm, digestAlgorithm, cred);
     }
 
     public static Response setSignature(Response response, String signatureAlgorithm, String digestAlgorithm,
@@ -119,14 +146,14 @@ public class OpenSAML3Util {
     }
 
     /**
-     * Generic method to sign SAML Logout Request
+     * Generic method to sign SAML2.0 Assertion or Response
      *
-     * @param request
-     * @param signatureAlgorithm
-     * @param digestAlgorithm
-     * @param cred
-     * @return
-     * @throws IdentityException
+     * @param request            generic xml request
+     * @param signatureAlgorithm signature algorithm
+     * @param digestAlgorithm    cryptographic hash algorithm
+     * @param cred               X509credential instance
+     * @return SignableXMLObject signed XML object
+     * @throws IdentityException If unable to set signature
      */
     private static SignableXMLObject doSetSignature(SignableXMLObject request, String signatureAlgorithm, String
             digestAlgorithm, X509Credential cred) throws IdentityException {
@@ -141,6 +168,16 @@ public class OpenSAML3Util {
         }
     }
 
+    /**
+     * This method is used to sign XML object
+     *
+     * @param signableXMLObject  signable XML object
+     * @param signatureAlgorithm signature algorithm
+     * @param digestAlgorithm    cryptographic hash algorithm
+     * @param cred               X509Credential instance
+     * @return SignableXMLObject signed XML object
+     * @throws IdentityException If unable to set signature
+     */
     public static SignableXMLObject setSSOSignature(SignableXMLObject signableXMLObject, String signatureAlgorithm, String
             digestAlgorithm, X509Credential cred) throws IdentityException {
 
@@ -197,6 +234,7 @@ public class OpenSAML3Util {
      * @param alias      Certificate alias against which the signature is validated.
      * @param domainName domain name of the subject
      * @return true, if the signature is valid.
+     * @throws IdentityException If unable to load credential information
      */
     public static boolean validateXMLSignature(RequestAbstractType request, String alias,
                                                String domainName) throws IdentityException {
@@ -214,11 +252,6 @@ public class OpenSAML3Util {
                     log.debug("Signature validation failed for the SAML Message : Failed to construct the X509CredentialImpl for the alias " +
                             alias, e);
                 }
-            } catch (IdentityException e) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Signature Validation Failed for the SAML Assertion : Signature is invalid.", e);
-
-                }
             } catch (Exception e) {
                 if (log.isDebugEnabled()) {
                     log.debug("Error while validating XML signature.", e);
@@ -231,8 +264,8 @@ public class OpenSAML3Util {
     /**
      * Get the X509CredentialImpl object for a particular tenant
      *
-     * @param tenantDomain
-     * @param alias
+     * @param tenantDomain tenant domain of the issuer
+     * @param alias        alias of cert
      * @return X509CredentialImpl object containing the public certificate of
      * that tenant
      * @throws org.wso2.carbon.identity.sso.saml.exception.IdentitySAML2SSOException Error when creating X509CredentialImpl object

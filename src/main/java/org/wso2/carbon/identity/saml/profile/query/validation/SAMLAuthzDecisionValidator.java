@@ -23,11 +23,22 @@ import org.wso2.carbon.identity.saml.profile.query.dto.InvalidItemDTO;
 
 import java.util.List;
 
-
+/**
+ * This class is used to validate AuthzDecisionQuery message
+ *
+ * @see org.opensaml.saml.saml2.core.AuthzDecisionQuery
+ */
 public class SAMLAuthzDecisionValidator extends SAMLSubjectQueryValidator {
+
+    /**
+     * This method is used to validate AuthzDecisionQuery message
+     *
+     * @param invalidItems List of invalid items tracked by validation process
+     * @param request      AuthzDecisionQuery request message
+     * @return Boolean true, if request message is valid
+     */
     @Override
     public boolean validate(List<InvalidItemDTO> invalidItems, RequestAbstractType request) {
-
         return super.validate(invalidItems, request);
     }
 }

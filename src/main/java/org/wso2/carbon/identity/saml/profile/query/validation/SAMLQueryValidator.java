@@ -23,14 +23,18 @@ import org.wso2.carbon.identity.saml.profile.query.dto.InvalidItemDTO;
 import java.util.List;
 
 /**
- * SAML Query validator interface
+ * SAMLQueryValidator interface has multiple implementations for validating different
+ * request message types.Each message has different elements to validate and return assertions
+ * according to the requirement.
  */
 public interface SAMLQueryValidator {
 
-
     /**
-     * @param request
-     * @return
+     * This method is used to validate any type of request message
+     *
+     * @param request      any type of request message in <code>RequestAbstractType</code>
+     * @param invalidItems List of invalid items
+     * @return Boolean true, if request message contain no validation errors
      */
     public boolean validate(List<InvalidItemDTO> invalidItems, RequestAbstractType request);
 

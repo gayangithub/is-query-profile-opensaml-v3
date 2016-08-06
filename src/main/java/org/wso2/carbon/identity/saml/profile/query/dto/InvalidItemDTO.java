@@ -20,54 +20,45 @@
 
 package org.wso2.carbon.identity.saml.profile.query.dto;
 
-
+/**
+ * Class to hold validation issues for all request messages
+ */
 public class InvalidItemDTO {
 
-    private String validationtype;
+    private String validationType;
     private String message;
 
     /**
      * Constructor
      *
-     * @param validationtype
-     * @param message
+     * @param validationType This is the type of validation error
+     * @param message        This is the validation message
      */
-    public InvalidItemDTO(String validationtype, String message) {
+    public InvalidItemDTO(String validationType, String message) {
         this.message = message;
-        this.validationtype = validationtype;
+        this.validationType = validationType;
 
     }
 
     /**
-     * @return String message
+     * This method is used to get message
+     *
+     * @return String This returns message
      */
     public String getMessage() {
 
         return message;
     }
 
-    /**
-     * @param message
-     */
-    public void setMessage(String message) {
-
-        this.message = message;
-    }
 
     /**
-     * @return String validationetype
+     * This method is used to get validation type
+     *
+     * @return String This returns validation type
      */
-    public String getValidationtype() {
+    public String getValidationType() {
 
-        return validationtype;
-    }
-
-    /**
-     * @param validationtype
-     */
-    public void setValidationtype(String validationtype) {
-        this.validationtype = validationtype;
-
+        return validationType;
     }
 
 

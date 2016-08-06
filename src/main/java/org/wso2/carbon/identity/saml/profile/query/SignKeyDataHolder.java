@@ -25,16 +25,12 @@ import org.opensaml.security.credential.CredentialContextSet;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.x509.X509Credential;
 import org.wso2.carbon.base.ServerConfiguration;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.sso.saml.SAMLSSOConstants;
 import org.wso2.carbon.identity.sso.saml.util.SAMLSSOUtil;
 import org.wso2.carbon.security.keystore.KeyStoreAdmin;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
-import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,56 +43,40 @@ import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 
-
+/**
+ * This class is used to process Signature by loading algorithms, certificates,
+ * private key, public key and etc
+ */
 public class SignKeyDataHolder implements X509Credential {
 
     public static final String SECURITY_KEY_STORE_KEY_ALIAS = "Security.KeyStore.KeyAlias";
-    final static Log log = LogFactory.getLog(X509Credential.class);
+    final static Log log = LogFactory.getLog(SignKeyDataHolder.class);
     private static final String DSA_ENCRYPTION_ALGORITHM = "DSA";
     private String signatureAlgorithm = null;
     private X509Certificate[] issuerCerts = null;
-
     private PrivateKey issuerPK = null;
-
     private PublicKey publicKey = null;
 
-    public SignKeyDataHolder(String username) throws IdentityException {
-        String keyAlias = null;
+    /**
+     * This constructor is used to collect certificate information of the signature
+     *
+     * @param tenantDomain String type of tenant domain
+     * @throws IdentityException If unable connect with RealmService
+     */
+    public SignKeyDataHolder(String tenantDomain) throws IdentityException {
+        String keyAlias;
         KeyStoreAdmin keyAdmin;
         KeyStoreManager keyMan;
         Certificate[] certificates;
         int tenantID;
-        String tenantDomain;
-        String userTenantDomain;
-        String spTenantDomain;
 
         try {
 
-            userTenantDomain = MultitenantUtils.getTenantDomain(username);
-            spTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-
-            if (userTenantDomain == null) {
-                // all local authenticator must set the value of userTenantDomain.
-                // if userTenantDomain is null that means, there is no local authenticator or
-                // the assert with local ID is set. In that case, this should be coming from
-                // federated authentication. In that case, we treat SP domain is equal to user domain.
-                userTenantDomain = spTenantDomain;
+            if (tenantDomain == null) {
+                tenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
             }
 
-            if (!SAMLSSOUtil.isSaaSApplication() && !spTenantDomain.equalsIgnoreCase(userTenantDomain)) {
-                throw IdentityException.error("Service Provider tenant domain must be equal to user tenant domain"
-                        + " for non-SaaS applications");
-            }
-
-            String signWithValue = IdentityUtil.getProperty(
-                    SAMLSSOConstants.FileBasedSPConfig.USE_AUTHENTICATED_USER_DOMAIN_CRYPTO);
-            if (signWithValue != null && "true".equalsIgnoreCase(signWithValue.trim())) {
-                tenantDomain = userTenantDomain;
-                tenantID = SAMLSSOUtil.getRealmService().getTenantManager().getTenantId(tenantDomain);
-            } else {
-                tenantDomain = spTenantDomain;
-                tenantID = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
-            }
+            tenantID = SAMLSSOUtil.getRealmService().getTenantManager().getTenantId(tenantDomain);
 
             IdentityTenantUtil.initializeRegistry(tenantID, tenantDomain);
 
@@ -160,22 +140,36 @@ public class SignKeyDataHolder implements X509Credential {
 
     }
 
+    /**
+     * getter of the SignatureAlgorithm
+     *
+     * @return String Signature Algorithm
+     */
     public String getSignatureAlgorithm() {
+
         return signatureAlgorithm;
     }
 
+    /**
+     * setter of Signature Algorithm
+     *
+     * @param signatureAlgorithm signature algorithm
+     */
     public void setSignatureAlgorithm(String signatureAlgorithm) {
+
         this.signatureAlgorithm = signatureAlgorithm;
     }
 
 
     @Nullable
     public String getEntityId() {
+
         return null;
     }
 
     @Nullable
     public UsageType getUsageType() {
+
         return null;
     }
 
@@ -184,13 +178,24 @@ public class SignKeyDataHolder implements X509Credential {
         return null;
     }
 
+    /**
+     * This method is used to get Public Key
+     *
+     * @return PublicKey public key
+     */
     @Nullable
     public PublicKey getPublicKey() {
         return publicKey;
     }
 
+    /**
+     * This method is used to get PrivateKey
+     *
+     * @return PrivateKey private key
+     */
     @Nullable
     public PrivateKey getPrivateKey() {
+
         return issuerPK;
     }
 
@@ -201,15 +206,21 @@ public class SignKeyDataHolder implements X509Credential {
 
     @Nullable
     public CredentialContextSet getCredentialContextSet() {
+
         return null;
     }
 
 
     public Class<? extends Credential> getCredentialType() {
+
         return null;
     }
 
-
+    /**
+     * This method is used to get Issuer Certificate
+     *
+     * @return X509Certificate certificate of issuer
+     */
     @Nonnull
     public X509Certificate getEntityCertificate() {
         return issuerCerts[0];
@@ -217,11 +228,13 @@ public class SignKeyDataHolder implements X509Credential {
 
 
     public Collection<X509Certificate> getEntityCertificateChain() {
+
         return null;
     }
 
     @Nullable
     public Collection<X509CRL> getCRLs() {
+
         return null;
     }
 }

@@ -24,11 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.opensaml.saml.common.SAMLVersion;
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.Response;
-import org.opensaml.saml.saml2.core.Status;
-import org.opensaml.saml.saml2.core.StatusCode;
-import org.opensaml.saml.saml2.core.StatusMessage;
+import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.core.impl.ResponseBuilder;
 import org.opensaml.saml.saml2.core.impl.StatusBuilder;
 import org.opensaml.saml.saml2.core.impl.StatusCodeBuilder;
@@ -36,7 +32,6 @@ import org.opensaml.saml.saml2.core.impl.StatusMessageBuilder;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.SAMLSSOServiceProviderDO;
 import org.wso2.carbon.identity.saml.profile.query.dto.InvalidItemDTO;
-import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
 import org.wso2.carbon.identity.saml.profile.query.util.OpenSAML3Util;
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestConstants;
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
@@ -45,24 +40,26 @@ import org.wso2.carbon.identity.sso.saml.util.SAMLSSOUtil;
 
 import java.util.List;
 
-
+/**
+ * his class is used to build response message for any type of request
+ */
 public class QueryResponseBuilder {
 
     final static Log log = LogFactory.getLog(SAMLQueryRequestUtil.class);
 
     /**
-     * @param assertions
-     * @param ssoIdPConfigs
-     * @param user
-     * @return
-     * @throws IdentityException
+     * @param assertions    List of assertions match with request
+     * @param ssoIdPConfigs Issuer information
+     * @param tenantDomain  requester's tenant domain
+     * @return Response element which contain one or more assertions
+     * @throws IdentityException If unable to collect issuer information
      */
-    public static Response build(Assertion[] assertions, SAMLSSOServiceProviderDO ssoIdPConfigs, UserDTO user) throws IdentityException {
+    public static Response build(List<Assertion> assertions, SAMLSSOServiceProviderDO ssoIdPConfigs, String tenantDomain) throws IdentityException {
         if (log.isDebugEnabled()) {
-            log.debug("Building SAML Response for the consumer '");
+            log.info("Building SAML Response for the consumer '");
         }
         Response response = new ResponseBuilder().buildObject();
-        response.setIssuer(OpenSAML3Util.getIssuer(user.getTenantDomain()));
+        response.setIssuer(OpenSAML3Util.getIssuer(tenantDomain));
         response.setID(SAMLSSOUtil.createID());
         response.setStatus(buildStatus(SAMLSSOConstants.StatusCodes.SUCCESS_CODE, null));
         response.setVersion(SAMLVersion.VERSION_20);
@@ -77,11 +74,19 @@ public class QueryResponseBuilder {
 
         //Sign on response message
         OpenSAML3Util.setSignature(response, ssoIdPConfigs.getSigningAlgorithmUri(), ssoIdPConfigs
-                .getDigestAlgorithmUri(), new SignKeyDataHolder(user.getUserName()));
+                .getDigestAlgorithmUri(), new SignKeyDataHolder(tenantDomain));
 
         return response;
     }
 
+    /**
+     * This method is used to build error response when request contain validation or
+     * processing errors
+     *
+     * @param invalidItem List of invalid items (violations)
+     * @return Response element which contain error status and error message
+     * @throws IdentityException If unable to collect issuer
+     */
     public static Response build(List<InvalidItemDTO> invalidItem) throws IdentityException {
 
         Response response = new ResponseBuilder().buildObject();
@@ -93,7 +98,7 @@ public class QueryResponseBuilder {
         //selecting Status Code
         if (invalidItem.size() > 0) {
             statusMessage = invalidItem.get(0).getMessage();
-            statusCode = invalidItem.get(0).getValidationtype();
+            statusCode = invalidItem.get(0).getValidationType();
             statusCode = filterStatusCode(statusCode);
         }
         response.setStatus(buildStatus(statusCode, statusMessage));
@@ -105,11 +110,11 @@ public class QueryResponseBuilder {
     }
 
     /**
-     * Get status of message
+     * This method is used to get status of message
      *
-     * @param status
-     * @param statMsg
-     * @return Status object
+     * @param status  response message Status
+     * @param statMsg status message of the response
+     * @return Status object of Status element
      */
     public static Status buildStatus(String status, String statMsg) {
 
@@ -130,6 +135,13 @@ public class QueryResponseBuilder {
         return stat;
     }
 
+    /**
+     * This method is used to select error message according to error type
+     *
+     * @param validationType error type
+     * @return String error message
+     * @see SAMLQueryRequestConstants
+     */
     public static String filterStatusCode(String validationType) {
         String statusCode;
         if (validationType.equalsIgnoreCase(SAMLQueryRequestConstants.ValidationType.VAL_VERSION)) {
@@ -142,6 +154,8 @@ public class QueryResponseBuilder {
             statusCode = SAMLSSOConstants.StatusCodes.REQUESTOR_ERROR;
         } else if (validationType.equalsIgnoreCase(SAMLQueryRequestConstants.ValidationType.VAL_MESSAGE_BODY)) {
             statusCode = SAMLSSOConstants.StatusCodes.REQUESTOR_ERROR;
+        } else if (validationType.equalsIgnoreCase(SAMLQueryRequestConstants.ValidationType.NO_ASSERTIONS)) {
+            statusCode = StatusCode.NO_AUTHN_CONTEXT;
         } else {
             statusCode = SAMLSSOConstants.StatusCodes.IDENTITY_PROVIDER_ERROR;
         }

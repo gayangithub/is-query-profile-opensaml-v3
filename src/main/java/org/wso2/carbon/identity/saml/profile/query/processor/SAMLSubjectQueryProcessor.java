@@ -20,85 +20,92 @@ package org.wso2.carbon.identity.saml.profile.query.processor;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.Issuer;
-import org.opensaml.saml.saml2.core.RequestAbstractType;
-import org.opensaml.saml.saml2.core.Response;
-import org.opensaml.saml.saml2.core.Subject;
-import org.opensaml.saml.saml2.core.SubjectQuery;
-import org.wso2.carbon.identity.application.common.model.User;
+import org.opensaml.saml.saml2.core.*;
 import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.identity.core.model.SAMLSSOServiceProviderDO;
 import org.wso2.carbon.identity.saml.profile.query.QueryResponseBuilder;
-import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
 import org.wso2.carbon.identity.saml.profile.query.handler.SAMLAttributeFinder;
 import org.wso2.carbon.identity.saml.profile.query.handler.UserStoreAttributeFinder;
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
+import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * This calss is used to process common elements of
+ * AttributeQuery,AuthnQuery,
+ * AuthorizationDecisionQuery,SubjectQuery messages.This class is the parent of
+ * given class list.
+ */
 public class SAMLSubjectQueryProcessor implements SAMLQueryProcessor {
 
     final static Log log = LogFactory.getLog(SAMLSubjectQueryProcessor.class);
 
-
     /**
-     * method to generate response object according to subject
+     * This method used to generate response object according to subject
      *
-     * @param request
+     * @param request assertion request message
      * @return Response container of one or more assertions
      */
     public Response process(RequestAbstractType request) {
 
         SubjectQuery query = (SubjectQuery) request;
-        String issuer = getIssuer(query.getIssuer());
-        UserDTO user = new UserDTO(getUserName(query.getSubject()));
-        Object issuerConfig = getIssuerConfig(issuer);
+        String user = getUserName(query.getSubject());
+        String issuerFullName = getIssuer(request.getIssuer());
+        String issuer = MultitenantUtils.getTenantAwareUsername(issuerFullName);
+        String tenantdomain = MultitenantUtils.getTenantDomain(issuerFullName);
+        SAMLSSOServiceProviderDO issuerConfig = getIssuerConfig(issuer);
         Map<String, String> attributes = getUserAttributes(user, null, issuerConfig);
-        Assertion assertion = build(user, issuerConfig, attributes);
-        Assertion[] assertions = {assertion};
+        Assertion assertion = null;
+        List<Assertion> assertions = null;
         Response response = null;
+        try {
+            assertion = SAMLQueryRequestUtil.buildSAMLAssertion(tenantdomain, attributes, issuerConfig);
+        } catch (IdentityException e) {
+            log.error(e);
+        }
+
+        assertions.add(assertion);
+
 
         try {
-            //building response object
-            response = QueryResponseBuilder.build(assertions, (SAMLSSOServiceProviderDO) issuerConfig,user);
+            response = QueryResponseBuilder.build(assertions, issuerConfig, user);
             log.info("SAMLSubjectQueryProcessor : response generated");
         } catch (IdentityException e) {
-            e.printStackTrace();
+            log.error(e);
         }
 
         return response;
     }
 
     /**
-     * method to load issuer config
+     * This method used to load issuer config
      *
-     * @param issuer
-     * @return get issuer config object
+     * @param issuer issuer name
+     * @return SAMLSSOServiceProviderDO issuer config object
      */
-    protected Object getIssuerConfig(String issuer) {
+    protected SAMLSSOServiceProviderDO getIssuerConfig(String issuer) {
 
         try {
             return SAMLQueryRequestUtil.getServiceProviderConfig(issuer);
         } catch (IdentityException e) {
             e.printStackTrace();
         }
-        return new Object();
+        return new SAMLSSOServiceProviderDO();
     }
 
     /**
-     * method to load user attributes as map with filtering(AttributeQuery)
+     * method to load user attributes in a map with filtering(AttributeQuery)
      *
-     * @param user
-     * @param attributes
-     * @param issuerConfig
-     * @return Map
+     * @param user         user name with tenant domain
+     * @param attributes   list of requested attributes
+     * @param issuerConfig issuer config information
+     * @return Map List of user attributes
      */
-    protected Map<String, String> getUserAttributes(UserDTO user, String[] attributes,
+    protected Map<String, String> getUserAttributes(String user, String[] attributes,
                                                     Object issuerConfig) {
 
         List<SAMLAttributeFinder> finders = getAttributeFinders();
@@ -115,28 +122,10 @@ public class SAMLSubjectQueryProcessor implements SAMLQueryProcessor {
     }
 
     /**
-     * build assertion
-     *
-     * @param user
-     * @param issuer
-     * @param attributes
-     * @return
-     */
-    protected Assertion build(UserDTO user, Object issuer, Map<String, String> attributes) {
-        Assertion responseAssertion = null;
-        try {
-            responseAssertion = SAMLQueryRequestUtil.buildSAMLAssertion(user, attributes, (SAMLSSOServiceProviderDO) issuer);
-        } catch (IdentityException e) {
-           log.error(e);
-        }
-        return responseAssertion;
-    }
-
-    /**
      * get issuer value
      *
-     * @param issuer
-     * @return
+     * @param issuer issuer element
+     * @return String issuer name
      */
     protected String getIssuer(Issuer issuer) {
 
@@ -144,10 +133,10 @@ public class SAMLSubjectQueryProcessor implements SAMLQueryProcessor {
     }
 
     /**
-     * get subject value
+     * method used to get subject value
      *
-     * @param subject
-     * @return String subject vslue
+     * @param subject subject element of request message
+     * @return String subject value
      */
     protected String getUserName(Subject subject) {
 
@@ -155,9 +144,9 @@ public class SAMLSubjectQueryProcessor implements SAMLQueryProcessor {
     }
 
     /**
-     * method to select attribute finder source
+     * method used to select attribute finder source
      *
-     * @return List
+     * @return List list of attribute finders
      */
     private List<SAMLAttributeFinder> getAttributeFinders() {
 

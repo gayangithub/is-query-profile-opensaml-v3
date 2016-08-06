@@ -20,12 +20,20 @@ package org.wso2.carbon.identity.saml.profile.query.handler;
 
 import org.opensaml.saml.saml2.core.Assertion;
 
+import java.util.List;
+
 /**
- * Interface class for SAML assertion finding
+ * The user of the interface has facility to switch between multiple Assertion stores
+ * at the run time.This interface contain multiple methods which can be used to query
+ * assertions from assertion stores.
  */
 public interface SAMLAssertionFinder {
 
     public void init();
 
-    public Assertion[] find(String id);
+    public Assertion findByID(String id);
+
+    public List<Assertion> findBySubject(String subject);
+
+
 }

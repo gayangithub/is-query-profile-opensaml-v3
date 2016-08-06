@@ -23,9 +23,20 @@ import org.wso2.carbon.identity.saml.profile.query.dto.InvalidItemDTO;
 
 import java.util.List;
 
-
+/**
+ * This class is used to validate AuthnQuery request message
+ *
+ * @see org.opensaml.saml.saml2.core.AuthnQuery
+ */
 public class SAMLAuthQueryValidator extends SAMLSubjectQueryValidator {
 
+    /**
+     * This method is used to validate AuthnQuery message elements
+     *
+     * @param invalidItems List of invalid items tracked by validation process
+     * @param request      AuthnQuery request message
+     * @return Boolean true, if request message validated completely
+     */
     @Override
     public boolean validate(List<InvalidItemDTO> invalidItems, RequestAbstractType request) {
         return super.validate(invalidItems, request);

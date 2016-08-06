@@ -26,13 +26,17 @@ import org.opensaml.saml.saml2.core.impl.AttributeQueryImpl;
 import org.opensaml.saml.saml2.core.impl.AuthnQueryImpl;
 import org.opensaml.saml.saml2.core.impl.SubjectQueryImpl;
 
-
+/**
+ * Factory class for selecting relevant processor dynamically for five request message types.
+ */
 public class SAMLProcessorFactory {
     /**
-     * factory method to select relevant processor
+     * Factory method to select relevant processor.Supported request messages
+     * AssertionIDRequest,AttributeQuery,AuthnQuery,
+     * AuthorizationDecisionQuery,SubjectQuery
      *
-     * @param request
-     * @return SAMLQueryProcessor
+     * @param request any type of request message
+     * @return SAMLQueryProcessor relevant processor class
      */
     public static SAMLQueryProcessor getProcessor(RequestAbstractType request) {
 
@@ -46,20 +50,17 @@ public class SAMLProcessorFactory {
 
             samlQueryProcessor = new SAMLAttributeQueryProcessor();
 
-
         } else if (request instanceof AuthnQueryImpl) {
 
             samlQueryProcessor = new SAMLAuthnQueryProcessor();
 
-
         } else if (request instanceof AuthorizationDecisionQueryImpl) {
-        /* deprecated after SAML 2.0 */
+
             samlQueryProcessor = new SAMLAuthzDecisionProcessor();
 
         } else if (request instanceof SubjectQueryImpl) {
 
             samlQueryProcessor = new SAMLSubjectQueryProcessor();
-
         }
 
         return samlQueryProcessor;

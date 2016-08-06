@@ -1,3 +1,23 @@
+/*
+ *
+ *  * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  *
+ *  * WSO2 Inc. licenses this file to you under the Apache License,
+ *  * Version 2.0 (the "License"); you may not use this file except
+ *  * in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  * http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing,
+ *  * software distributed under the License is distributed on an
+ *  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  * KIND, either express or implied.  See the License for the
+ *  * specific language governing permissions and limitations
+ *  * under the License.
+ *
+ */
+
 package org.wso2.carbon.identity.saml.profile.query.test;
 
 import org.apache.axiom.om.OMElement;
@@ -8,29 +28,21 @@ import org.apache.axis2.client.Options;
 import org.apache.axis2.client.ServiceClient;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.ConfigurationContextFactory;
+import org.apache.axis2.databinding.types.Entities;
 import org.joda.time.DateTime;
 import org.opensaml.saml.common.SAMLVersion;
 import org.opensaml.saml.saml1.core.NameIdentifier;
-import org.opensaml.saml.saml2.core.AttributeQuery;
-import org.opensaml.saml.saml2.core.Issuer;
-import org.opensaml.saml.saml2.core.NameID;
-import org.opensaml.saml.saml2.core.NameIDType;
-import org.opensaml.saml.saml2.core.Subject;
-import org.opensaml.saml.saml2.core.SubjectConfirmation;
-import org.opensaml.saml.saml2.core.SubjectConfirmationData;
-import org.opensaml.saml.saml2.core.impl.AttributeQueryBuilder;
-import org.opensaml.saml.saml2.core.impl.IssuerBuilder;
-import org.opensaml.saml.saml2.core.impl.NameIDBuilder;
-import org.opensaml.saml.saml2.core.impl.SubjectBuilder;
-import org.opensaml.saml.saml2.core.impl.SubjectConfirmationBuilder;
-import org.opensaml.saml.saml2.core.impl.SubjectConfirmationDataBuilder;
+import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.impl.*;
+import org.wso2.carbon.identity.authenticator.saml2.sso.common.SAMLConstants;
 import org.wso2.carbon.identity.saml.profile.query.util.OpenSAML3Util;
 import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
+
 import java.io.File;
 import java.util.UUID;
 
 
-public class SAMLQueryRequestClient {
+public class AuthnQueryAuthContextClient {
 
     private static final String END_POINT = "https://localhost:9443/services/SAMLQueryService";
     private static final String SOAP_ACTION = "http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Test";
@@ -39,7 +51,9 @@ public class SAMLQueryRequestClient {
     private static final String TRUST_STORE = "client-truststore.jks";
     private static final String TRUST_STORE_PASSWORD = "wso2carbon";
     private static final String ISSUER_ID = "travelocity.com";
-    private static final String NAME_ID = "admin@carbon.super";
+    private static final String NAME_ID = "admin";
+    private static final String SESSION_INDEX = "b6d2b2ff-ca11-4727-91d0-ec2a60be892d";
+    private static final String AUTH_CONTEXT_CLASS_REF = "urn:oasis:names:tc:SAML:2.0:ac:classes:Password";
 
     public static void main(String[] ags) throws Exception {
         String REQUEST_ID = "_" + UUID.randomUUID().toString();
@@ -47,8 +61,8 @@ public class SAMLQueryRequestClient {
         DateTime issueInstant = new DateTime();
         DateTime notOnOrAfter =
                 new DateTime(issueInstant.getMillis() + (long) 60 * 1000);
-
-        AttributeQuery attributeQuery = new AttributeQueryBuilder().buildObject();
+        /*AttributeQuery Request*/
+        AuthnQuery authnQuery = new AuthnQueryBuilder().buildObject();
         Issuer issuer = new IssuerBuilder().buildObject();
         Subject subject = new SubjectBuilder().buildObject();
         NameID nameID = new NameIDBuilder().buildObject();
@@ -64,20 +78,26 @@ public class SAMLQueryRequestClient {
         subjectConfirmation.setMethod(SubjectConfirmation.METHOD_BEARER);
         subject.getSubjectConfirmations().add(subjectConfirmation);
         subject.setNameID(nameID);
-        attributeQuery.setVersion(SAMLVersion.VERSION_20);
-        attributeQuery.setID(REQUEST_ID);
-        attributeQuery.setIssueInstant(issueInstant);
-        attributeQuery.setIssuer(issuer);
-        attributeQuery.setSubject(subject);
-
+        authnQuery.setVersion(SAMLVersion.VERSION_20);
+        authnQuery.setID(REQUEST_ID);
+        authnQuery.setIssueInstant(issueInstant);
+        authnQuery.setIssuer(issuer);
+        authnQuery.setSubject(subject);
+        RequestedAuthnContext requestedAuthnContext = new RequestedAuthnContextBuilder().buildObject();
+        requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.BETTER);
+        AuthnContextClassRef authnContextClassRef = new AuthnContextClassRefBuilder().buildObject();
+        authnContextClassRef.setAuthnContextClassRef(AUTH_CONTEXT_CLASS_REF);
+        requestedAuthnContext.getAuthnContextClassRefs().add(authnContextClassRef);
+        authnQuery.setRequestedAuthnContext(requestedAuthnContext);
+        authnQuery.setSessionIndex(SESSION_INDEX);
         SAMLQueryRequestUtil.doBootstrap();
-        OpenSAML3Util.setSSOSignature(attributeQuery, DIGEST_METHOD_ALGO,
+        OpenSAML3Util.setSSOSignature(authnQuery, DIGEST_METHOD_ALGO,
                 SIGNING_ALGO, new SPSignKeyDataHolder());
 
         try {
-            String requestMessage = SAMLQueryRequestUtil.marshall(attributeQuery);
+            String requestMessage = SAMLQueryRequestUtil.marshall(authnQuery);
             body = requestMessage;
-            System.out.println("----Sample AttributeQuery Request Message----");
+            System.out.println("----Sample AuthnQuery Request Message----");
             System.out.println(body);
         } catch (Exception e) {
 

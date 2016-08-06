@@ -18,19 +18,15 @@
 
 package org.wso2.carbon.identity.saml.profile.query.handler;
 
-import org.wso2.carbon.identity.saml.profile.query.dto.UserDTO;
-
 import java.util.Map;
 
 /**
- * Interface for selecting assertion hosting source methods
+ * The user of the interface has facility to find user attributes from user store
  */
 public interface SAMLAttributeFinder {
 
     public void init();
 
-    public Map<String, String> getAttributes(String userName);
-
-    public Map<String, String> getAttributes(UserDTO user, String[] attributes);
+    public Map<String, String> getAttributes(String user, String[] attributes);
 
 }

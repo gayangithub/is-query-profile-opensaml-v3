@@ -21,10 +21,16 @@ package org.wso2.carbon.identity.saml.profile.query.processor;
 import org.opensaml.saml.saml2.core.RequestAbstractType;
 import org.opensaml.saml.saml2.core.Response;
 
-
+/**
+ * SAMLQueryProcessor interface has multiple implementations for processing different
+ * request message types.Each message has different elements to process and return assertions
+ * according to the requirement.
+ */
 public interface SAMLQueryProcessor {
     /**
-     * @param request
+     * This method is used to process different types of request messages
+     *
+     * @param request assertion request message
      * @return Response container of one or more assertions
      */
     public Response process(RequestAbstractType request);

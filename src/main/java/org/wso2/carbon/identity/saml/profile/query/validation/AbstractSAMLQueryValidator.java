@@ -32,29 +32,39 @@ import org.wso2.carbon.identity.saml.profile.query.util.SAMLQueryRequestUtil;
 
 import java.util.List;
 
+/**
+ * This class is used to validate common elements for all the request types such as
+ * signature, SAML version, issuer and etc
+ */
 public class AbstractSAMLQueryValidator implements SAMLQueryValidator {
-
+    /**
+     * Standard log
+     */
     private final static Log log = LogFactory.getLog(AbstractSAMLQueryValidator.class);
-
-
+    /**
+     * Issuer instance holder
+     */
     private SAMLSSOServiceProviderDO ssoIdpConfig = null;
-    private String IssuerName = null;
-    private String IssuerSPProvidedID = null;
-    private String alias = null;
-    private String domainName = null;
-    private boolean isValidSig = true;
 
+    /**
+     * Constructor with no arguments
+     */
     public AbstractSAMLQueryValidator() {
 
     }
 
-
+    /**
+     * This method is used to validate issuer, signature and SAML version
+     *
+     * @param invalidItems List of invalid items tracked by validation process
+     * @param request      Any type of assertion request
+     * @return Boolean true if request is completely validated
+     */
     public boolean validate(List<InvalidItemDTO> invalidItems, RequestAbstractType request) {
 
-        //status of validation
-        boolean isIssuerValidated = false;
-        boolean isSignatureValidated = false;
-        boolean isValidSAMLVersion = false;
+        boolean isIssuerValidated;
+        boolean isSignatureValidated;
+        boolean isValidSAMLVersion;
 
         try {
             //validate SAML Request vertion
@@ -95,12 +105,20 @@ public class AbstractSAMLQueryValidator implements SAMLQueryValidator {
         return isSignatureValidated;
     }
 
-
+    /**
+     * This method is used to validate signature
+     *
+     * @param request any type of assertion request message
+     * @return Boolean true, if signature is validated
+     */
     protected boolean validateSignature(RequestAbstractType request) {
+        String alias;
+        boolean isValidSig;
+        String domainName;
         alias = ssoIdpConfig.getCertAlias();
         domainName = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
         try {
-            //unable to use UTIL
+
             isValidSig = OpenSAML3Util.validateXMLSignature(request,
                     alias, domainName);
 
@@ -117,12 +135,21 @@ public class AbstractSAMLQueryValidator implements SAMLQueryValidator {
             log.error(SAMLQueryRequestConstants.ServiceMessages.SIGNATURE_VALIDATION_FAILED);
             log.error(ex.getMessage());
         }
-        return isValidSig;
+        return false;
     }
 
+    /**
+     * This method is used to validate issuer of the request message
+     *
+     * @param request any type of request message
+     * @return Boolean true, if issuer is valid
+     * @throws IdentityException If unable to collect issuer information
+     */
     protected boolean validateIssuer(RequestAbstractType request) throws IdentityException {
         Issuer issuer = request.getIssuer();
         boolean validIssuer = false;
+        String IssuerSPProvidedID;
+        String IssuerName;
         if (issuer.getValue() == null && issuer.getSPProvidedID() == null) {
 
             throw IdentityException.error(SAMLQueryRequestConstants.ValidationMessage.EXIT_WITH_ERROR);
@@ -131,7 +158,7 @@ public class AbstractSAMLQueryValidator implements SAMLQueryValidator {
             IssuerSPProvidedID = issuer.getSPProvidedID();
 
             if (issuer.getFormat() != null) {
-                if (issuer.getFormat().equals(SAMLQueryRequestConstants.Attribute.ISSUER_FORMAT)) {
+                if (issuer.getFormat().equals(SAMLQueryRequestConstants.GenericConstants.ISSUER_FORMAT)) {
 
                     try {
                         ssoIdpConfig = SAMLQueryRequestUtil.getServiceProviderConfig(issuer.getValue());
@@ -162,19 +189,30 @@ public class AbstractSAMLQueryValidator implements SAMLQueryValidator {
         return validIssuer;
     }
 
+    /**
+     * This method is used to validate SAML version of request message
+     *
+     * @param request any type of request message
+     * @return Boolean true, if SAML version is 2.0
+     * @throws IdentityException if SAML version not compatible
+     */
     protected boolean validateSAMLVersion(RequestAbstractType request) throws IdentityException {
         boolean isValidversion = false;
         if (request.getVersion().equals(SAMLVersion.VERSION_20)) {
             isValidversion = true;
         } else {
             log.error(SAMLQueryRequestConstants.ServiceMessages.NON_COMPAT_SAML_VERSION);
-            isValidversion = false;
             throw IdentityException.error(SAMLQueryRequestConstants.ValidationMessage.EXIT_WITH_ERROR);
 
         }
         return isValidversion;
     }
 
+    /**
+     * This getter method return issuer information instance
+     *
+     * @return SAMLSSOServiceProviderDO issuer information
+     */
     public SAMLSSOServiceProviderDO getSsoIdpConfig() {
         return ssoIdpConfig;
     }
