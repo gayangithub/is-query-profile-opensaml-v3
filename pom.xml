@@ -21,7 +21,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.wso2.carbon.identity</groupId>
-    <artifactId>org.wso2.carbon.identity.saml.profile.query</artifactId>
+    <artifactId>org.wso2.carbon.identity.query.saml</artifactId>
     <version>1.0.0</version>
     <packaging>bundle</packaging>
 
@@ -29,12 +29,12 @@
         <dependency>
             <groupId>org.wso2.carbon</groupId>
             <artifactId>org.wso2.carbon.utils</artifactId>
-            <version>4.4.3</version>
+            <version>4.4.7</version>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity</groupId>
             <artifactId>org.wso2.carbon.identity.base</artifactId>
-            <version>5.0.7</version>
+            <version>5.5.0-m4</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.opensaml</groupId>
@@ -54,7 +54,7 @@
         <dependency>
             <groupId>org.wso2.carbon.identity</groupId>
             <artifactId>org.wso2.carbon.identity.core</artifactId>
-            <version>5.0.7</version>
+            <version>5.5.0-m4</version>
             <exclusions>
                 <exclusion>
                     <groupId>opensaml.wso2</groupId>
@@ -64,12 +64,16 @@
                     <groupId>opensaml.wso2</groupId>
                     <artifactId>opensaml</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.orbit.org.opensaml</groupId>
+                    <artifactId>opensaml</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity</groupId>
             <artifactId>org.wso2.carbon.identity.sso.saml</artifactId>
-            <version>5.0.7</version>
+            <version>5.1.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>opensaml.wso2</groupId>
@@ -85,6 +89,10 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.opensaml</groupId>
+                    <artifactId>opensaml</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.orbit.org.opensaml</groupId>
                     <artifactId>opensaml</artifactId>
                 </exclusion>
             </exclusions>
